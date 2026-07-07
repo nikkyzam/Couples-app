@@ -1,7 +1,15 @@
 // Minimal offline-first service worker. Caches the app shell so Kindle keeps
 // working (and feels app-like) even without a connection.
+//
+// Paths are resolved against the worker's own registration scope (rather than
+// hardcoded as root-absolute) so the same file works whether the app is hosted
+// at a domain root or under a subpath (e.g. GitHub Pages' /Couples-app/).
 const CACHE = 'kindle-v1'
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png']
+const ROOT = self.registration.scope
+const SHELL = ['', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'].map(
+  (p) => new URL(p, ROOT).href,
+)
+const INDEX_URL = new URL('index.html', ROOT).href
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)))
@@ -22,9 +30,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   // Network-first for navigation, cache fallback for offline.
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html')),
-    )
+    event.respondWith(fetch(request).catch(() => caches.match(INDEX_URL)))
     return
   }
   event.respondWith(

@@ -63,6 +63,22 @@ Open it on your phone's browser and use **"Add to Home Screen"** — it installs
 real app (custom icon, full-screen, works offline) thanks to the PWA manifest and
 service worker.
 
+## Live deployment (GitHub Pages)
+
+Every push to `claude/couples-intimacy-games-app-gbzfzo` auto-builds and deploys via
+[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) to:
+
+**https://<your-github-username>.github.io/Couples-app/**
+
+**One-time setup** (do this once in the repo, on GitHub.com): **Settings → Pages →
+Build and deployment → Source → select "GitHub Actions"**. After that, every push
+deploys automatically — check progress under the repo's **Actions** tab.
+
+Open the URL on each phone → **Add to Home Screen** to install it. To enable
+cross-device sync on the deployed site too, add `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY` as **repository secrets** (Settings → Secrets and variables →
+Actions) — leave them unset and the deployed app runs in local-only mode.
+
 ## Regenerating the app icon
 
 ```bash

@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Kindle</title>
+    <script>
+      // Single Page Apps for GitHub Pages: github.com/rafgraph/spa-github-pages
+      // GitHub Pages has no server-side rewrites, so a direct hit on any route
+      // other than "/" 404s. This encodes the intended path into a query string
+      // and redirects to index.html, which restores it (see the matching script
+      // in index.html) before the router reads the URL.
+      var pathSegmentsToKeep = 1 // this is a project page served under /Couples-app/
+
+      var l = window.location
+      l.replace(
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname
+            .split('/')
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join('/') +
+          '/?/' +
+          l.pathname
+            .slice(1)
+            .split('/')
+            .slice(pathSegmentsToKeep)
+            .join('/')
+            .replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash,
+      )
+    </script>
+  </head>
+  <body></body>
+</html>
