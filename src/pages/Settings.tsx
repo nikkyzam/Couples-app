@@ -6,9 +6,12 @@ import { SectionTitle, Card, Button } from '../components/ui'
 const EMOJIS = ['💜', '❤️', '🧡', '💛', '💚', '💙', '🩷', '🔥', '🌙', '⭐']
 
 export default function Settings() {
-  const { state, dispatch } = useStore()
+  const { state, dispatch, cloud, inviteCode, signOut } = useStore()
   const navigate = useNavigate()
   const { profile } = state
+  // In synced mode you can only edit your own profile (your partner edits theirs
+  // on their own phone).
+  const editableSlots: PartnerId[] = cloud ? [state.activeUser] : ['A', 'B']
 
   function rename(id: PartnerId, name: string) {
     dispatch({
@@ -37,12 +40,27 @@ export default function Settings() {
     <div>
       <SectionTitle eyebrow="Just for you two" title="Settings" />
 
+      {/* Invite code (synced mode) */}
+      {cloud && inviteCode && (
+        <>
+          <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
+            Your invite code
+          </h3>
+          <Card className="mb-6 text-center">
+            <p className="text-4xl font-bold tracking-[0.3em] text-white">{inviteCode}</p>
+            <p className="mt-2 text-xs text-plum-300/60">
+              Share this with your partner so they can join your space from their phone.
+            </p>
+          </Card>
+        </>
+      )}
+
       {/* Profiles */}
       <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
-        Profiles
+        {cloud ? 'Your profile' : 'Profiles'}
       </h3>
       <div className="space-y-3">
-        {(['A', 'B'] as PartnerId[]).map((id) => (
+        {editableSlots.map((id) => (
           <Card key={id} className="!p-4">
             <input
               value={profile.accounts[id].name}
@@ -135,20 +153,28 @@ export default function Settings() {
 
       {/* Danger zone */}
       <div className="mt-8">
-        <Button
-          variant="danger"
-          className="w-full"
-          onClick={() => {
-            if (confirm('Reset everything? This clears profiles, notes, and progress on this device.')) {
-              dispatch({ type: 'RESET' })
-              navigate('/onboarding')
-            }
-          }}
-        >
-          Reset all data
-        </Button>
+        {cloud ? (
+          <Button variant="soft" className="w-full" onClick={() => signOut?.()}>
+            Sign out
+          </Button>
+        ) : (
+          <Button
+            variant="danger"
+            className="w-full"
+            onClick={() => {
+              if (confirm('Reset everything? This clears profiles, notes, and progress on this device.')) {
+                dispatch({ type: 'RESET' })
+                navigate('/onboarding')
+              }
+            }}
+          >
+            Reset all data
+          </Button>
+        )}
         <p className="mt-3 text-center text-xs text-plum-300/50">
-          Kindle keeps everything private on this device. Nothing is uploaded.
+          {cloud
+            ? 'Your data is private to you and your partner, synced securely.'
+            : 'Kindle keeps everything private on this device. Nothing is uploaded.'}
         </p>
       </div>
     </div>

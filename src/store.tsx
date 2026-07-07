@@ -17,7 +17,7 @@ import type {
 
 const STORAGE_KEY = 'kindle.state.v1'
 
-const initialState: AppState = {
+export const initialState: AppState = {
   profile: {
     accounts: {
       A: { name: '', emoji: '💜', pin: '' },
@@ -51,7 +51,7 @@ function loadInitialState(): AppState {
   return initialState
 }
 
-type Action =
+export type Action =
   | { type: 'COMPLETE_ONBOARDING'; payload: Partial<AppState['profile']> }
   | { type: 'SET_ACTIVE_USER'; user: PartnerId }
   | { type: 'SET_COMFORT'; level: SpiceLevel }
@@ -62,17 +62,20 @@ type Action =
   | { type: 'SEND_NOTE'; note: LoveNote }
   | { type: 'MARK_NOTE_READ'; id: string }
   | { type: 'DELETE_NOTE'; id: string }
+  | { type: 'REPLACE'; state: AppState }
   | { type: 'RESET' }
 
 // Unlock the next level after every 5 completed prompts, but never above the
 // comfort ceiling the couple explicitly opted into.
-function computeUnlock(playCount: number, comfort: SpiceLevel): SpiceLevel {
+export function computeUnlock(playCount: number, comfort: SpiceLevel): SpiceLevel {
   const earned = (Math.floor(playCount / 5) + 1) as number
   return Math.min(earned, comfort) as SpiceLevel
 }
 
-function reducer(state: AppState, action: Action): AppState {
+export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
+    case 'REPLACE':
+      return action.state
     case 'COMPLETE_ONBOARDING': {
       const profile = { ...state.profile, ...action.payload, onboarded: true }
       return {
@@ -135,12 +138,17 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
-interface Ctx {
+export interface Ctx {
   state: AppState
   dispatch: React.Dispatch<Action>
+  // Present in cloud mode: whether data is synced to Supabase, the shared
+  // invite code, and a sign-out action.
+  cloud?: boolean
+  signOut?: () => void
+  inviteCode?: string
 }
 
-const StoreContext = createContext<Ctx | null>(null)
+export const StoreContext = createContext<Ctx | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadInitialState)
@@ -159,7 +167,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [state])
 
-  const value = useMemo(() => ({ state, dispatch }), [state])
+  const value = useMemo(() => ({ state, dispatch, cloud: false }), [state])
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 

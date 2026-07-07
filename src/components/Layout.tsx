@@ -11,7 +11,7 @@ const TABS = [
 ]
 
 export default function Layout() {
-  const { state, dispatch } = useStore()
+  const { state, dispatch, cloud } = useStore()
   const navigate = useNavigate()
   const { accounts } = state.profile
   const active = state.activeUser
@@ -35,15 +35,24 @@ export default function Layout() {
           </span>
         </button>
 
-        <button
-          onClick={() => dispatch({ type: 'SET_ACTIVE_USER', user: other })}
-          className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs text-plum-100"
-          title="Switch who's holding the phone"
-        >
-          <span>Switch to {accounts[other].name || 'partner'}</span>
-          <span className="text-base">{accounts[other].emoji}</span>
-          <span aria-hidden>⇄</span>
-        </button>
+        {cloud ? (
+          // Synced mode: your partner is on their own phone — just show who.
+          <span className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs text-plum-100">
+            <span className="text-base">{accounts[other].emoji}</span>
+            <span>with {accounts[other].name || 'your partner'}</span>
+          </span>
+        ) : (
+          // Shared-device mode: hand the phone over by switching the active user.
+          <button
+            onClick={() => dispatch({ type: 'SET_ACTIVE_USER', user: other })}
+            className="flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs text-plum-100"
+            title="Switch who's holding the phone"
+          >
+            <span>Switch to {accounts[other].name || 'partner'}</span>
+            <span className="text-base">{accounts[other].emoji}</span>
+            <span aria-hidden>⇄</span>
+          </button>
+        )}
       </header>
 
       <main className="flex-1 px-5 pb-28 pt-2">
