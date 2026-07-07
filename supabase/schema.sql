@@ -142,8 +142,17 @@ end; $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Realtime: broadcast row changes so both phones update live.
+-- Idempotent so this whole file is safe to re-run (e.g. on every app startup).
 -- ─────────────────────────────────────────────────────────────────────────────
-alter publication supabase_realtime add table public.notes;
-alter publication supabase_realtime add table public.desire_votes;
-alter publication supabase_realtime add table public.couples;
-alter publication supabase_realtime add table public.members;
+do $$
+declare t text;
+begin
+  foreach t in array array['notes', 'desire_votes', 'couples', 'members'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;

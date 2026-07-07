@@ -75,15 +75,22 @@ This lets each partner install on their **own phone** with their **own account**
 have notes + votes sync live. One-time setup (~5 min):
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. In the dashboard, open **SQL Editor → New query**, paste the contents of
-   [`supabase/schema.sql`](supabase/schema.sql), and run it. This creates the tables,
-   row-level-security policies, the create/join RPCs, and enables realtime.
-3. In **Project Settings → API**, copy the **Project URL** and the **anon public key**.
-4. Copy `.env.example` to `.env.local` and paste them in:
+2. In **Project Settings → API**, copy the **Project URL** and the **anon / publishable
+   key**.
+3. Copy `.env.example` to `.env.local` and paste them in:
    ```
    VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
+   VITE_SUPABASE_ANON_KEY=sb_publishable_...        # (or eyJhbGciOi... on older projects)
    ```
+4. Apply the database schema. **Automatic (recommended):** also set `SUPABASE_DB_URL`
+   in `.env.local` to your database connection string (Supabase → **Connect** →
+   **Session pooler**, with your DB password filled in). Then `npm run dev` /
+   `npm run preview` runs [`scripts/db-push.mjs`](scripts/db-push.mjs) automatically,
+   which applies [`supabase/schema.sql`](supabase/schema.sql) on startup (idempotent, so
+   it's safe every time). You can also run it once with `npm run db:push`.
+   **Manual alternative:** paste `supabase/schema.sql` into the Supabase **SQL Editor**
+   and run it. (`SUPABASE_DB_URL` is a secret — it holds your DB password — but it is
+   not prefixed with `VITE_`, so it never reaches the browser bundle.)
 5. `npm run build && npm run preview` (or `npm run dev`). The app now boots into the
    sign-up screen instead of local mode.
 
