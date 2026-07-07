@@ -49,6 +49,12 @@ one of two modes:
 - **The Climax Guide** — a warm, communication-first playbook focused on her pleasure
   and finishing feeling amazing.
 - **Safe word bar** — on every game screen, either partner can tap to pause instantly.
+- **App lock** — optionally require a 4-digit PIN to open Kindle on this device
+  (Settings → App lock). It re-locks after ~2 minutes in the background, and
+  guards the whole app before anything else loads or initializes — nothing in the
+  app is reachable without the PIN once it's set. "Forgot your PIN?" on the lock
+  screen offers a confirmed local reset (cloud-mode accounts are unaffected; it
+  only clears this device).
 
 ## Run it locally
 

@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { SPICE_META, type PartnerId, type SpiceLevel } from '../types'
 import { SectionTitle, Card, Button } from '../components/ui'
 import { useSpeech } from '../lib/useSpeech'
+import { useAppLock } from '../lib/useAppLock'
 
 const EMOJIS = ['💜', '❤️', '🧡', '💛', '💚', '💙', '🩷', '🔥', '🌙', '⭐']
 
@@ -11,6 +13,11 @@ export default function Settings() {
   const navigate = useNavigate()
   const { profile } = state
   const { supported, voices, speak, prefs, setPrefs } = useSpeech()
+  const lock = useAppLock()
+  const [pinDraft, setPinDraft] = useState('')
+  const [pinStage, setPinStage] = useState<'idle' | 'set' | 'confirm'>('idle')
+  const [firstPin, setFirstPin] = useState('')
+  const [pinError, setPinError] = useState('')
   // In synced mode you can only edit your own profile (your partner edits theirs
   // on their own phone).
   const editableSlots: PartnerId[] = cloud ? [state.activeUser] : ['A', 'B']
@@ -137,6 +144,82 @@ export default function Settings() {
         <p className="mt-2 text-xs text-plum-300/60">
           Either of you can say this to pause everything, anytime.
         </p>
+      </Card>
+
+      {/* App lock */}
+      <h3 className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
+        App lock
+      </h3>
+      <Card>
+        <label className="flex items-center justify-between">
+          <span>
+            <span className="block font-semibold text-white">Require a PIN to open Kindle</span>
+            <span className="block text-xs text-plum-300/60">
+              {lock.hasLock ? 'On for this device' : 'Off — anyone with this device can open Kindle'}
+            </span>
+          </span>
+          <button
+            onClick={() => {
+              if (lock.hasLock) {
+                if (confirm('Turn off the app lock on this device?')) lock.setCode('')
+                setPinStage('idle')
+              } else {
+                setPinStage('set')
+                setPinError('')
+              }
+            }}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition ${lock.hasLock ? 'bg-ember-500' : 'bg-white/15'}`}
+            role="switch"
+            aria-checked={lock.hasLock}
+          >
+            <span
+              className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${lock.hasLock ? 'left-6' : 'left-1'}`}
+            />
+          </button>
+        </label>
+
+        {pinStage !== 'idle' && (
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <p className="text-sm text-white">
+              {pinStage === 'set' ? 'Choose a 4-digit PIN' : 'Enter it again to confirm'}
+            </p>
+            <input
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              value={pinDraft}
+              autoFocus
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, '').slice(0, 4)
+                setPinDraft(v)
+                setPinError('')
+                if (v.length === 4) {
+                  if (pinStage === 'set') {
+                    setFirstPin(v)
+                    setPinDraft('')
+                    setPinStage('confirm')
+                  } else if (v === firstPin) {
+                    lock.setCode(v)
+                    setPinStage('idle')
+                    setPinDraft('')
+                    setFirstPin('')
+                  } else {
+                    setPinError("Those didn't match — try again.")
+                    setPinDraft('')
+                    setPinStage('set')
+                    setFirstPin('')
+                  }
+                }
+              }}
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-2xl tracking-[0.5em] text-white focus:border-ember-400 focus:outline-none"
+            />
+            {pinError && <p className="mt-2 text-xs text-red-300">{pinError}</p>}
+            <p className="mt-2 text-xs text-plum-300/60">
+              Applies the next time Kindle is opened on this device.
+            </p>
+          </div>
+        )}
       </Card>
 
       {/* Guided voice */}

@@ -185,6 +185,21 @@ body {
   animation: glowPulse 3s ease-in-out infinite;
 }
 
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ember,
   .animate-breathe,
