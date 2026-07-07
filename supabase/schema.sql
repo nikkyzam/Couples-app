@@ -14,8 +14,14 @@ create table if not exists public.couples (
   safe_word      text not null default 'pineapple',
   unlocked_level int  not null default 1,
   play_count     int  not null default 0,
+  owned_toys     text[] not null default '{}',  -- shared toy box, synced between partners
+  wishlist       text[] not null default '{}',  -- toys the couple wants to buy
   created_at     timestamptz not null default now()
 );
+
+-- For projects created before these columns existed:
+alter table public.couples add column if not exists owned_toys text[] not null default '{}';
+alter table public.couples add column if not exists wishlist   text[] not null default '{}';
 
 -- Each member is one authenticated user, tied to a slot ('A' or 'B').
 create table if not exists public.members (

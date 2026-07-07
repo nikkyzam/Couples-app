@@ -13,7 +13,6 @@ import AuthScreen from './AuthScreen'
 import LinkScreen from './LinkScreen'
 
 const FAV_KEY = 'kindle.favorites'
-const OWNED_KEY = 'kindle.ownedToys'
 
 interface CoupleRow {
   id: string
@@ -22,6 +21,8 @@ interface CoupleRow {
   safe_word: string
   unlocked_level: number
   play_count: number
+  owned_toys: string[] | null
+  wishlist: string[] | null
 }
 interface MemberRow {
   couple_id: string
@@ -52,13 +53,6 @@ function loadFavorites(): string[] {
   }
 }
 
-function loadOwnedToys(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(OWNED_KEY) || '[]')
-  } catch {
-    return []
-  }
-}
 
 // Assemble the local AppState mirror from the synced Supabase rows.
 function buildState(
@@ -114,7 +108,8 @@ function buildState(
     desiresA,
     desiresB,
     favorites: loadFavorites(),
-    ownedToys: loadOwnedToys(),
+    ownedToys: couple.owned_toys ?? [],
+    wishlist: couple.wishlist ?? [],
     notes: mappedNotes,
   }
 }
@@ -244,11 +239,21 @@ export function CloudProvider({ children }: { children: ReactNode }) {
           await sb.from('notes').delete().eq('id', action.id)
           break
         case 'TOGGLE_FAVORITE':
-          // Favorites are device-local by design.
+          // Favorites are personal, so they stay device-local by design.
           localStorage.setItem(FAV_KEY, JSON.stringify(stateRef.current.favorites))
           break
         case 'TOGGLE_OWNED_TOY':
-          localStorage.setItem(OWNED_KEY, JSON.stringify(stateRef.current.ownedToys))
+          // The toy box is shared — sync it to the couple so both phones match.
+          await sb
+            .from('couples')
+            .update({ owned_toys: stateRef.current.ownedToys, wishlist: stateRef.current.wishlist })
+            .eq('id', cid)
+          break
+        case 'TOGGLE_WISHLIST_TOY':
+          await sb
+            .from('couples')
+            .update({ wishlist: stateRef.current.wishlist })
+            .eq('id', cid)
           break
         case 'COMPLETE_ONBOARDING': {
           // Used by Settings to rename — only ever update your own profile.
@@ -273,7 +278,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       }
       localDispatch(action)
       // These persist from the *updated* mirror, so defer to the next tick.
-      if (action.type === 'TOGGLE_FAVORITE' || action.type === 'TOGGLE_OWNED_TOY') {
+      if (
+        action.type === 'TOGGLE_FAVORITE' ||
+        action.type === 'TOGGLE_OWNED_TOY' ||
+        action.type === 'TOGGLE_WISHLIST_TOY'
+      ) {
         setTimeout(() => persist(action), 0)
       } else {
         persist(action)

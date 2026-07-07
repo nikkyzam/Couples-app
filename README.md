@@ -41,7 +41,9 @@ one of two modes:
   with body-safety and communication. Higher-level toys unlock as you progress. Couples
   tap **"We have this"** to build **their toy box**, and Date Night then only ever
   suggests toys they actually own (falling back to all unlocked toys if the box is
-  empty). The toy box is stored on the device.
+  empty). In synced mode the toy box and shopping list are **shared between both
+  phones**. A **"To buy" tab** suggests toys to add — ranking the ones the couple
+  *both* said yes to (in Yes/No/Maybe) first — and keeps a shared shopping list.
 - **Love Notes** — each partner has an inbox; leave sweet, flirty, or bold notes for
   each other. Switch profiles with the button in the top-right.
 - **The Climax Guide** — a warm, communication-first playbook focused on her pleasure

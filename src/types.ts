@@ -68,6 +68,7 @@ export interface DesireItem {
   label: string
   level: SpiceLevel
   category: Category
+  toyId?: string // links a desire to a toy, so mutual yeses can suggest a purchase
 }
 
 export type Vote = 'yes' | 'maybe' | 'no' | null
@@ -109,5 +110,6 @@ export interface AppState {
   desiresB: Record<string, Vote>
   favorites: string[] // favorited prompt ids
   ownedToys: string[] // Toy ids the couple actually has ("our toy box")
+  wishlist: string[] // Toy ids the couple wants to buy
   notes: LoveNote[]
 }

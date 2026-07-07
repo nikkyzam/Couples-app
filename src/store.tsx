@@ -34,6 +34,7 @@ export const initialState: AppState = {
   desiresB: {},
   favorites: [],
   ownedToys: [],
+  wishlist: [],
   notes: [],
 }
 
@@ -60,6 +61,7 @@ export type Action =
   | { type: 'RECORD_PLAY' }
   | { type: 'TOGGLE_FAVORITE'; id: string }
   | { type: 'TOGGLE_OWNED_TOY'; id: string }
+  | { type: 'TOGGLE_WISHLIST_TOY'; id: string }
   | { type: 'VOTE_DESIRE'; user: PartnerId; itemId: string; vote: Vote }
   | { type: 'SEND_NOTE'; note: LoveNote }
   | { type: 'MARK_NOTE_READ'; id: string }
@@ -122,6 +124,17 @@ export function reducer(state: AppState, action: Action): AppState {
         ownedToys: has
           ? state.ownedToys.filter((t) => t !== action.id)
           : [...state.ownedToys, action.id],
+        // Owning a toy removes it from the wishlist.
+        wishlist: has ? state.wishlist : state.wishlist.filter((t) => t !== action.id),
+      }
+    }
+    case 'TOGGLE_WISHLIST_TOY': {
+      const has = state.wishlist.includes(action.id)
+      return {
+        ...state,
+        wishlist: has
+          ? state.wishlist.filter((t) => t !== action.id)
+          : [...state.wishlist, action.id],
       }
     }
     case 'VOTE_DESIRE': {
