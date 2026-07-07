@@ -23,6 +23,9 @@ one of two modes:
   mood → a slow warm-up → *then* gently invites a toy in once you're already in the
   moment (never the headline, always opt-in) → exploring together → afterglow. This is
   how the app leads reserved couples to toys naturally rather than pushing them.
+  A **guided voice** (on by default) narrates each step aloud in a soft, warm tone —
+  it uses the browser's on-device speech engine (no network, works offline). Toggle it,
+  pick a voice, and set the speed under **Settings → Guided voice**.
 - **Games**
   - **Truth or Dare** — take turns; pass anytime.
   - **Would You Rather** — point at the same time, discover what you both like.

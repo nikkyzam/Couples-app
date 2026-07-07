@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { SPICE_META, type PartnerId, type SpiceLevel } from '../types'
 import { SectionTitle, Card, Button } from '../components/ui'
+import { useSpeech } from '../lib/useSpeech'
 
 const EMOJIS = ['💜', '❤️', '🧡', '💛', '💚', '💙', '🩷', '🔥', '🌙', '⭐']
 
@@ -9,6 +10,7 @@ export default function Settings() {
   const { state, dispatch, cloud, inviteCode, signOut } = useStore()
   const navigate = useNavigate()
   const { profile } = state
+  const { supported, voices, speak, prefs, setPrefs } = useSpeech()
   // In synced mode you can only edit your own profile (your partner edits theirs
   // on their own phone).
   const editableSlots: PartnerId[] = cloud ? [state.activeUser] : ['A', 'B']
@@ -136,6 +138,85 @@ export default function Settings() {
           Either of you can say this to pause everything, anytime.
         </p>
       </Card>
+
+      {/* Guided voice */}
+      {supported && (
+        <>
+          <h3 className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
+            Guided voice
+          </h3>
+          <Card>
+            <label className="flex items-center justify-between">
+              <span className="font-semibold text-white">Narrate Date Night aloud</span>
+              <button
+                onClick={() => setPrefs({ enabled: !prefs.enabled })}
+                className={`relative h-7 w-12 rounded-full transition ${prefs.enabled ? 'bg-ember-500' : 'bg-white/15'}`}
+                role="switch"
+                aria-checked={prefs.enabled}
+              >
+                <span
+                  className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${prefs.enabled ? 'left-6' : 'left-1'}`}
+                />
+              </button>
+            </label>
+
+            {prefs.enabled && (
+              <div className="mt-4 space-y-4">
+                {voices.length > 0 && (
+                  <div>
+                    <label className="text-xs text-plum-300">Voice</label>
+                    <select
+                      value={prefs.voiceURI ?? ''}
+                      onChange={(e) => setPrefs({ voiceURI: e.target.value || null })}
+                      className="mt-1 w-full rounded-2xl border border-white/10 bg-plum-900 px-3 py-3 text-white focus:border-ember-400 focus:outline-none"
+                    >
+                      <option value="">Recommended (auto)</option>
+                      {voices.map((v) => (
+                        <option key={v.voiceURI} value={v.voiceURI}>
+                          {v.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="flex items-center justify-between text-xs text-plum-300">
+                    <span>Speed</span>
+                    <span>{prefs.rate.toFixed(2)}×</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0.7}
+                    max={1.1}
+                    step={0.05}
+                    value={prefs.rate}
+                    onChange={(e) => setPrefs({ rate: Number(e.target.value) })}
+                    className="mt-1 w-full accent-ember-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-plum-300/60">
+                    <span>slow &amp; sensual</span>
+                    <span>brisk</span>
+                  </div>
+                </div>
+
+                <Button
+                  variant="soft"
+                  className="w-full"
+                  onClick={() =>
+                    speak(
+                      "Hi love. This is the voice that will guide you through your evening together. Relax, take your time, and enjoy each other.",
+                      { force: true },
+                    )
+                  }
+                >
+                  🔊 Test voice
+                </Button>
+              </div>
+            )}
+          </Card>
+        </>
+      )}
 
       {/* Guides */}
       <h3 className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">

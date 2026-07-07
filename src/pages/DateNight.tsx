@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { TOYS } from '../data/toys'
@@ -7,6 +7,7 @@ import { availablePrompts, pickRandom } from '../lib/play'
 import type { Toy } from '../types'
 import { Button } from '../components/ui'
 import SafeWordBar from '../components/SafeWordBar'
+import { useSpeech } from '../lib/useSpeech'
 
 // A guided, candle-lit evening for two. It reads as a romantic ritual — and it
 // gently, naturally leads a warmed-up couple to bring a toy into their night.
@@ -47,6 +48,37 @@ export default function DateNight() {
   const idx = ORDER.indexOf(stage)
   const next = () => setStage(ORDER[Math.min(idx + 1, ORDER.length - 1)])
   const back = () => setStage(ORDER[Math.max(idx - 1, 0)])
+
+  // ── Guided voice ──────────────────────────────────────────────────────────
+  const { supported, speaking, speak, stop, prefs, setPrefs } = useSpeech()
+
+  // A warm, conversational script for the narrator — a little softer and more
+  // spoken than the on-screen text.
+  const script = useMemo(() => {
+    switch (stage) {
+      case 'scene':
+        return `Welcome to your evening together. Let's set the mood. Dim the lights or light a candle, put on a playlist you both love, and when you're ready, say your safe word out loud to each other. There's no rush tonight.`
+      case 'warmup':
+        return `Now, take your time to warm up. ${warmups.join('. ')}. Go slowly, and enjoy every single moment.`
+      case 'spark':
+        return `You're both warmed up now. If it feels exciting, you might bring something in to play with together — or simply stay just as you are. Choose whatever draws you in.`
+      case 'play':
+        return toy
+          ? `Lovely choice. ${toy.howTo} Remember: ${toy.tips[0].toLowerCase()}. There's no need to hurry — let it feel good.`
+          : ''
+      case 'explore':
+        return `Take your time exploring together. Let whoever is receiving guide the pace and the pressure. Keep talking, and when something feels good, stay right there.`
+      case 'afterglow':
+        return `That was beautiful. Stay close now. Catch your breath, hold each other, and tell one another one thing you loved. You did this together.`
+    }
+  }, [stage, warmups, toy])
+
+  // Narrate whenever the step changes and the voice is on.
+  useEffect(() => {
+    if (prefs.enabled && script) speak(script)
+    else stop()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, prefs.enabled])
 
   // The evening is available once the couple is at Flirty (L2) or above — so
   // it's always something they both chose to step into.
@@ -232,6 +264,27 @@ export default function DateNight() {
       </div>
 
       <div className="mt-4 space-y-3">
+        {supported && (
+          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
+            <button
+              onClick={() => setPrefs({ enabled: !prefs.enabled })}
+              className="flex items-center gap-2 font-medium text-plum-100"
+            >
+              <span className={`text-lg ${speaking ? 'animate-breathe' : ''}`}>
+                {prefs.enabled ? '🔊' : '🔇'}
+              </span>
+              Guided voice {prefs.enabled ? 'on' : 'off'}
+            </button>
+            {prefs.enabled && (
+              <button
+                onClick={() => (speaking ? stop() : script && speak(script))}
+                className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white"
+              >
+                {speaking ? '❚❚ Pause' : '↻ Replay'}
+              </button>
+            )}
+          </div>
+        )}
         {stage !== 'afterglow' && (
           <div className="flex gap-3">
             {idx > 0 && (
