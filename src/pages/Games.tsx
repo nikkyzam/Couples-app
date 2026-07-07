@@ -4,6 +4,12 @@ import { SectionTitle, LevelBadge } from '../components/ui'
 
 const GAMES = [
   {
+    to: '/games/whisper',
+    label: 'Whisper',
+    emoji: '🫦',
+    desc: 'Dirty talk for the shy. Hear a line, whisper it, or just send it — one brave step at a time.',
+  },
+  {
     to: '/games/dare',
     label: 'Truth or Dare',
     emoji: '🎯',

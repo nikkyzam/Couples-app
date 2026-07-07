@@ -31,6 +31,14 @@ one of two modes:
   step's time is up it simply turns green and the voice softly says "no rush," never
   forcing anyone forward.
 - **Games**
+  - **Whisper** — a gentle *dirty-talk coach for the hesitant partner*. It hands you
+    one small, sayable line at a time on a **boldness dial** (capped at your comfort
+    ceiling), and gives shy people every out: **hear it first** in the guided voice
+    and just repeat it, tap **"softer"** to dial a line down, use **fill-in-the-blank**
+    starters when a blank page is scarier than finishing a sentence, or — if saying it
+    out loud is still too much — **send it as a private note** instead. A personal,
+    on-device **confidence meter** turns every attempt into a little win, so talking
+    dirty gets easier one whisper at a time.
   - **Truth or Dare** — take turns; pass anytime.
   - **Would You Rather** — point at the same time, discover what you both like.
   - **Desire Deck** — draw a random card from the whole deck.
