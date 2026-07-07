@@ -37,11 +37,11 @@ export default function Onboarding() {
     <div className="mx-auto flex min-h-full max-w-md flex-col px-6 py-10">
       {step === 0 && (
         <div className="animate-float-in flex flex-1 flex-col justify-center text-center">
-          <div className="mb-4 text-6xl">🔥</div>
-          <h1 className="text-4xl font-bold text-white">Kindle</h1>
+          <div className="mb-4 animate-breathe text-6xl">🔥</div>
+          <h1 className="font-display text-6xl font-bold text-white text-glow">Kindle</h1>
           <p className="mt-3 text-lg text-plum-200/90">
-            A playful, private space for the two of you to explore intimacy —
-            gently, and at your own pace.
+            An intimate, private space for the two of you — where curiosity turns
+            into confidence, and closeness into fire.
           </p>
           <ul className="mx-auto mt-8 space-y-3 text-left text-sm text-plum-100/90">
             <li className="flex gap-3">

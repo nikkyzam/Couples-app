@@ -19,6 +19,10 @@ one of two modes:
   shared **comfort ceiling** (Level 1 Cozy → Level 5 Adventurous) and a **safe word**.
 - **Spice-level progression** — content unlocks gradually as you play together, and
   never rises above the comfort ceiling you chose. Raise or lower it anytime.
+- **Date Night** — a guided, candle-lit evening for two. It flows from setting the
+  mood → a slow warm-up → *then* gently invites a toy in once you're already in the
+  moment (never the headline, always opt-in) → exploring together → afterglow. This is
+  how the app leads reserved couples to toys naturally rather than pushing them.
 - **Games**
   - **Truth or Dare** — take turns; pass anytime.
   - **Would You Rather** — point at the same time, discover what you both like.

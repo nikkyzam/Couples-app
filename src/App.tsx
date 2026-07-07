@@ -9,6 +9,7 @@ import WouldYouRather from './pages/WouldYouRather'
 import DesireDeck from './pages/DesireDeck'
 import Desires from './pages/Desires'
 import Toys from './pages/Toys'
+import DateNight from './pages/DateNight'
 import Notes from './pages/Notes'
 import NewNote from './pages/NewNote'
 import Pleasure from './pages/Pleasure'
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/games/deck" element={<DesireDeck />} />
         <Route path="/desires" element={<Desires />} />
         <Route path="/toys" element={<Toys />} />
+        <Route path="/date-night" element={<DateNight />} />
         <Route path="/notes" element={<Notes />} />
         <Route path="/notes/new" element={<NewNote />} />
         <Route path="/pleasure" element={<Pleasure />} />

@@ -42,6 +42,22 @@ export default function Games() {
         <LevelBadge level={state.unlockedLevel} />
       </div>
 
+      {/* Date Night — a guided romantic evening */}
+      <Link to="/date-night" className="block">
+        <div className="animate-float-in glow-ring mb-4 flex items-center gap-4 rounded-3xl border border-ember-400/25 bg-gradient-to-br from-ember-600/40 to-plum-800/50 p-4">
+          <span className="animate-breathe grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/10 text-3xl">
+            🕯️
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-xl font-bold text-white">Date Night</p>
+            <p className="text-sm text-plum-100/85">
+              A guided evening, warm-up to afterglow. Let it lead the way.
+            </p>
+          </div>
+          <span className="text-ember-200">→</span>
+        </div>
+      </Link>
+
       <div className="space-y-3">
         {GAMES.map((g) => (
           <Link

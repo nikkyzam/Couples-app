@@ -1,12 +1,13 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import type { PartnerId } from '../types'
+import Ambiance from './Ambiance'
 
 const TABS = [
   { to: '/', label: 'Home', icon: '🏠', end: true },
   { to: '/games', label: 'Play', icon: '🎲' },
   { to: '/desires', label: 'Desires', icon: '💭' },
-  { to: '/toys', label: 'Toys', icon: '✨' },
+  { to: '/toys', label: 'Explore', icon: '✨' },
   { to: '/notes', label: 'Notes', icon: '💌' },
 ]
 
@@ -20,7 +21,8 @@ export default function Layout() {
   const unread = state.notes.filter((n) => n.to === active && !n.read).length
 
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col">
+    <div className="relative mx-auto flex min-h-full max-w-md flex-col">
+      <Ambiance />
       {/* Top bar with active-user switcher */}
       <header className="sticky top-0 z-20 flex items-center justify-between px-5 py-3 backdrop-blur-md">
         <button
@@ -55,7 +57,7 @@ export default function Layout() {
         )}
       </header>
 
-      <main className="flex-1 px-5 pb-28 pt-2">
+      <main className="relative z-10 flex-1 px-5 pb-28 pt-2">
         <Outlet />
       </main>
 

@@ -27,9 +27,32 @@ export default function Home() {
   return (
     <div className="space-y-6">
       <div className="animate-float-in pt-2">
-        <p className="text-sm text-plum-200/70">Welcome back,</p>
-        <h1 className="text-3xl font-bold text-white">{meName} {profile.accounts[activeUser].emoji}</h1>
+        <p className="text-sm text-plum-200/70">Good to see you,</p>
+        <h1 className="font-display text-4xl font-bold text-white">
+          {meName} {profile.accounts[activeUser].emoji}
+        </h1>
       </div>
+
+      {/* Date Night hero — a romantic guided evening */}
+      <Link to="/date-night" className="block">
+        <div className="animate-float-in glow-ring animate-glow relative overflow-hidden rounded-3xl border border-ember-400/25 bg-gradient-to-br from-ember-600/40 via-plum-700/40 to-plum-900/50 p-6">
+          <div className="pointer-events-none absolute -right-6 -top-8 text-7xl opacity-30 blur-[1px]">
+            🕯️
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-ember-200">
+            An evening for two
+          </p>
+          <h2 className="font-display mt-1 text-3xl font-bold text-white text-glow">
+            Date Night
+          </h2>
+          <p className="mt-1 max-w-[15rem] text-sm text-plum-100/90">
+            A guided, candle-lit journey — from a slow warm-up to the very last spark.
+          </p>
+          <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white">
+            Begin the night →
+          </span>
+        </div>
+      </Link>
 
       {/* Level card */}
       <Card className="animate-float-in relative overflow-hidden">
