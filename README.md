@@ -26,6 +26,10 @@ one of two modes:
   A **guided voice** (on by default) narrates each step aloud in a soft, warm tone —
   it uses the browser's on-device speech engine (no network, works offline). Toggle it,
   pick a voice, and set the speed under **Settings → Guided voice**.
+  At the start you choose **how long the evening should last** (15 / 30 / 45 / 60 min,
+  or freeflow). Each step then shows a gentle, pausable suggested-time bar — when a
+  step's time is up it simply turns green and the voice softly says "no rush," never
+  forcing anyone forward.
 - **Games**
   - **Truth or Dare** — take turns; pass anytime.
   - **Would You Rather** — point at the same time, discover what you both like.

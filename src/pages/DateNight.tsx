@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { TOYS } from '../data/toys'
@@ -18,6 +18,26 @@ type Stage = 'scene' | 'warmup' | 'spark' | 'play' | 'explore' | 'afterglow'
 // Note the order: the couple warms up *first*, and only then is a toy invited in.
 const ORDER: Stage[] = ['scene', 'warmup', 'spark', 'play', 'explore', 'afterglow']
 
+// How the chosen session length is spread across the timed steps (afterglow is
+// always open-ended). These are gentle suggestions, never a countdown you must
+// obey — the couple can always linger.
+const WEIGHTS: Record<Stage, number> = {
+  scene: 0.1,
+  warmup: 0.28,
+  spark: 0.07,
+  play: 0.22,
+  explore: 0.33,
+  afterglow: 0,
+}
+
+const LENGTHS = [
+  { min: 15, label: 'A quick spark', sub: '~15 min' },
+  { min: 30, label: 'Take our time', sub: '~30 min', rec: true },
+  { min: 45, label: 'A long, slow evening', sub: '~45 min' },
+  { min: 60, label: 'All night', sub: '~60 min' },
+  { min: 0, label: 'Freeflow', sub: 'no timer' },
+]
+
 export default function DateNight() {
   const { state, dispatch } = useStore()
   const navigate = useNavigate()
@@ -26,6 +46,7 @@ export default function DateNight() {
     [state.unlockedLevel],
   )
   const [stage, setStage] = useState<Stage>('scene')
+  const [totalMin, setTotalMin] = useState<number | null>(null) // null until chosen; 0 = freeflow
   const [toy, setToy] = useState<Toy | null>(
     available.find((t) => t.beginnerFriendly) ?? available[0] ?? null,
   )
@@ -80,6 +101,17 @@ export default function DateNight() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage, prefs.enabled])
 
+  // Suggested seconds for the current step, from the chosen session length.
+  const stageSeconds =
+    totalMin && totalMin > 0 ? Math.round(totalMin * 60 * WEIGHTS[stage]) : 0
+
+  // A soft spoken nudge when a step's suggested time is up — pure encouragement.
+  const onTimeUp = useCallback(() => {
+    if (prefs.enabled) {
+      speak("There's no rush at all. Whenever you both feel ready, move on together.")
+    }
+  }, [prefs.enabled, speak])
+
   // The evening is available once the couple is at Flirty (L2) or above — so
   // it's always something they both chose to step into.
   if (available.length === 0) {
@@ -94,6 +126,53 @@ export default function DateNight() {
         <Link to="/settings" className="mt-6">
           <Button>Adjust comfort together</Button>
         </Link>
+      </div>
+    )
+  }
+
+  // First, choose how long tonight should last.
+  if (totalMin === null) {
+    return (
+      <div className="flex min-h-[74vh] flex-col">
+        <button onClick={() => navigate('/')} className="mb-4 text-sm text-plum-300">
+          ← Home
+        </button>
+        <div className="animate-float-in text-center">
+          <div className="animate-breathe text-5xl">⏳</div>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-widest text-ember-300">
+            An evening for two
+          </p>
+          <h1 className="font-display text-3xl font-bold text-white text-glow">
+            How long tonight?
+          </h1>
+          <p className="mx-auto mt-2 max-w-xs text-sm text-plum-200/85">
+            Pick a pace. We'll gently suggest a time for each step — but you can always
+            linger. This is only a guide.
+          </p>
+        </div>
+
+        <div className="mt-8 space-y-3">
+          {LENGTHS.map((l) => (
+            <button
+              key={l.min}
+              onClick={() => setTotalMin(l.min)}
+              className="card-glass flex w-full items-center justify-between rounded-3xl p-4 text-left transition hover:bg-white/10 active:scale-[0.99]"
+            >
+              <span>
+                <span className="flex items-center gap-2 font-semibold text-white">
+                  {l.label}
+                  {l.rec && (
+                    <span className="rounded-full bg-ember-500/20 px-2 py-0.5 text-[10px] font-semibold text-ember-300">
+                      popular
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm text-plum-200/70">{l.sub}</span>
+              </span>
+              <span className="text-plum-300">→</span>
+            </button>
+          ))}
+        </div>
       </div>
     )
   }
@@ -115,6 +194,10 @@ export default function DateNight() {
           ))}
         </div>
       </div>
+
+      {stageSeconds > 0 && stage !== 'afterglow' && (
+        <StageTimer key={stage} seconds={stageSeconds} onElapsed={onTimeUp} />
+      )}
 
       <div className="flex flex-1 flex-col">
         {stage === 'scene' && (
@@ -348,6 +431,63 @@ function Checklist({ items }: { items: string[] }) {
           {it}
         </div>
       ))}
+    </div>
+  )
+}
+
+// A gentle, pausable suggested-time bar for a step. When the time is up it turns
+// warm green and softly cues — it never blocks or forces anyone forward.
+function StageTimer({
+  seconds,
+  onElapsed,
+}: {
+  seconds: number
+  onElapsed?: () => void
+}) {
+  const [elapsed, setElapsed] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const fired = useRef(false)
+
+  useEffect(() => {
+    if (paused) return
+    const id = setInterval(() => setElapsed((e) => e + 1), 1000)
+    return () => clearInterval(id)
+  }, [paused])
+
+  useEffect(() => {
+    if (!fired.current && elapsed >= seconds) {
+      fired.current = true
+      onElapsed?.()
+    }
+  }, [elapsed, seconds, onElapsed])
+
+  const remaining = Math.max(0, seconds - elapsed)
+  const done = elapsed >= seconds
+  const pct = Math.min(100, (elapsed / seconds) * 100)
+  const mm = Math.floor(remaining / 60)
+  const ss = remaining % 60
+
+  return (
+    <div className="mb-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+      <div className="flex items-center justify-between text-xs">
+        <span className={done ? 'font-semibold text-green-300' : 'text-plum-200/80'}>
+          {done
+            ? '💜 Take all the time you need'
+            : `About ${mm}:${String(ss).padStart(2, '0')} for this step`}
+        </span>
+        <button
+          onClick={() => setPaused((p) => !p)}
+          className="rounded-full bg-white/10 px-2.5 py-0.5 font-semibold text-white"
+        >
+          {paused ? '▶ Resume' : '❚❚ Pause'}
+        </button>
+      </div>
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div
+          className={`h-full rounded-full transition-all ${done ? 'bg-green-400' : 'bg-gradient-to-r from-ember-400 to-plum-400'}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   )
 }
