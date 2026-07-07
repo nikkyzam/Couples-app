@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+
+  /* Warm, intimate palette — deep plum + ember */
+  --color-ember-50: #fff1f3;
+  --color-ember-100: #ffe1e6;
+  --color-ember-200: #ffc7d1;
+  --color-ember-300: #ff9fb1;
+  --color-ember-400: #ff6885;
+  --color-ember-500: #f83a63;
+  --color-ember-600: #e51950;
+  --color-ember-700: #c10d41;
+  --color-ember-800: #a10f3d;
+  --color-ember-900: #86123a;
+
+  --color-plum-50: #f8f5fb;
+  --color-plum-100: #f0e9f6;
+  --color-plum-200: #e2d4ee;
+  --color-plum-300: #ccb2e0;
+  --color-plum-400: #b085cd;
+  --color-plum-500: #965cb8;
+  --color-plum-600: #7e40a0;
+  --color-plum-700: #683283;
+  --color-plum-800: #572c6b;
+  --color-plum-900: #2a1636;
+  --color-plum-950: #1a0d22;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(150, 92, 184, 0.35), transparent 60%),
+    radial-gradient(900px 500px at 90% 110%, rgba(248, 58, 99, 0.22), transparent 55%),
+    var(--color-plum-950);
+  color: #f4eef8;
+  -webkit-font-smoothing: antialiased;
+  font-family: var(--font-sans);
+}
+
+/* Subtle card sheen */
+.card-glass {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02)
+  );
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-float-in {
+  animation: floatIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes flipReveal {
+  from {
+    opacity: 0;
+    transform: rotateX(-25deg) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: rotateX(0) translateY(0);
+  }
+}
+
+.animate-flip {
+  animation: flipReveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center bottom;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

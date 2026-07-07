@@ -1,0 +1,156 @@
+import { Link, useNavigate } from 'react-router-dom'
+import { useStore } from '../store'
+import { SPICE_META, type PartnerId, type SpiceLevel } from '../types'
+import { SectionTitle, Card, Button } from '../components/ui'
+
+const EMOJIS = ['💜', '❤️', '🧡', '💛', '💚', '💙', '🩷', '🔥', '🌙', '⭐']
+
+export default function Settings() {
+  const { state, dispatch } = useStore()
+  const navigate = useNavigate()
+  const { profile } = state
+
+  function rename(id: PartnerId, name: string) {
+    dispatch({
+      type: 'COMPLETE_ONBOARDING',
+      payload: {
+        accounts: {
+          ...profile.accounts,
+          [id]: { ...profile.accounts[id], name },
+        },
+      },
+    })
+  }
+  function setEmoji(id: PartnerId, emoji: string) {
+    dispatch({
+      type: 'COMPLETE_ONBOARDING',
+      payload: {
+        accounts: {
+          ...profile.accounts,
+          [id]: { ...profile.accounts[id], emoji },
+        },
+      },
+    })
+  }
+
+  return (
+    <div>
+      <SectionTitle eyebrow="Just for you two" title="Settings" />
+
+      {/* Profiles */}
+      <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
+        Profiles
+      </h3>
+      <div className="space-y-3">
+        {(['A', 'B'] as PartnerId[]).map((id) => (
+          <Card key={id} className="!p-4">
+            <input
+              value={profile.accounts[id].name}
+              onChange={(e) => rename(id, e.target.value)}
+              placeholder={`Partner ${id === 'A' ? 1 : 2}`}
+              className="w-full bg-transparent text-lg font-semibold text-white placeholder:text-plum-300/50 focus:outline-none"
+            />
+            <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
+              {EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  onClick={() => setEmoji(id, e)}
+                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-lg transition ${
+                    profile.accounts[id].emoji === e
+                      ? 'bg-ember-500/40 ring-2 ring-ember-400'
+                      : 'bg-white/5'
+                  }`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Comfort ceiling */}
+      <h3 className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
+        Comfort ceiling
+      </h3>
+      <Card>
+        <p className="text-sm text-plum-200/80">
+          The app never shows content above this. Move it together, only when you
+          both feel ready.
+        </p>
+        <div className="mt-4 space-y-2">
+          {[1, 2, 3, 4, 5].map((lvl) => {
+            const m = SPICE_META[lvl as SpiceLevel]
+            const active = profile.comfort === lvl
+            return (
+              <button
+                key={lvl}
+                onClick={() => dispatch({ type: 'SET_COMFORT', level: lvl as SpiceLevel })}
+                className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition ${
+                  active ? 'border-ember-400 bg-ember-500/15' : 'border-white/10 bg-white/5'
+                }`}
+              >
+                <span className="text-xl">{m.emoji}</span>
+                <span className="flex-1">
+                  <span className="block text-sm font-semibold text-white">
+                    L{lvl} · {m.name}
+                  </span>
+                  <span className="block text-xs text-plum-200/60">{m.blurb}</span>
+                </span>
+                {active && <span className="text-ember-400">✓</span>}
+              </button>
+            )
+          })}
+        </div>
+      </Card>
+
+      {/* Safe word */}
+      <h3 className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
+        Safe word
+      </h3>
+      <Card>
+        <input
+          value={profile.safeWord}
+          onChange={(e) => dispatch({ type: 'SET_SAFEWORD', word: e.target.value })}
+          className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:border-ember-400 focus:outline-none"
+        />
+        <p className="mt-2 text-xs text-plum-300/60">
+          Either of you can say this to pause everything, anytime.
+        </p>
+      </Card>
+
+      {/* Guides */}
+      <h3 className="mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
+        Guides
+      </h3>
+      <Link to="/pleasure">
+        <Card className="flex items-center justify-between hover:bg-white/10">
+          <span className="flex items-center gap-3">
+            <span className="text-2xl">💎</span>
+            <span className="font-semibold text-white">The Climax Guide</span>
+          </span>
+          <span className="text-plum-300">→</span>
+        </Card>
+      </Link>
+
+      {/* Danger zone */}
+      <div className="mt-8">
+        <Button
+          variant="danger"
+          className="w-full"
+          onClick={() => {
+            if (confirm('Reset everything? This clears profiles, notes, and progress on this device.')) {
+              dispatch({ type: 'RESET' })
+              navigate('/onboarding')
+            }
+          }}
+        >
+          Reset all data
+        </Button>
+        <p className="mt-3 text-center text-xs text-plum-300/50">
+          Kindle keeps everything private on this device. Nothing is uploaded.
+        </p>
+      </div>
+    </div>
+  )
+}
