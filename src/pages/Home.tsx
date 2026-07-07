@@ -5,8 +5,10 @@ import { Card, LevelBadge } from '../components/ui'
 
 const QUICK = [
   { to: '/games/whisper', label: 'Whisper', emoji: '🫦', sub: 'Dirty talk, ease in gently' },
+  { to: '/games/dice', label: 'Love Dice', emoji: '🎲', sub: 'Roll and let fate decide' },
   { to: '/games/dare', label: 'Truth or Dare', emoji: '🎯', sub: 'Take turns, no pressure' },
   { to: '/games/wyr', label: 'Would You Rather', emoji: '⚖️', sub: 'Discover what you both like' },
+  { to: '/games/deck', label: 'Desire Deck', emoji: '🃏', sub: 'Draw a surprise card' },
   { to: '/desires', label: 'Yes / No / Maybe', emoji: '💭', sub: 'Find your overlap privately' },
 ]
 

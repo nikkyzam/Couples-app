@@ -10,6 +10,12 @@ const GAMES = [
     desc: 'Dirty talk for the shy. Hear a line, whisper it, or just send it — one brave step at a time.',
   },
   {
+    to: '/games/dice',
+    label: 'Love Dice',
+    emoji: '🎲',
+    desc: 'Roll three dice — an action, a spot, a way — and do what they say. Fate sets the mood.',
+  },
+  {
     to: '/games/dare',
     label: 'Truth or Dare',
     emoji: '🎯',

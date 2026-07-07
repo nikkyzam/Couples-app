@@ -39,6 +39,10 @@ one of two modes:
     out loud is still too much — **send it as a private note** instead. A personal,
     on-device **confidence meter** turns every attempt into a little win, so talking
     dirty gets easier one whisper at a time.
+  - **Love Dice** — roll three slot-machine reels — an *action*, a *spot*, and a
+    *how/how-long* — that combine into one playful instruction ("Kiss their neck,
+    slowly."). Every face is capped at your comfort ceiling, the guided voice can
+    read the result aloud, and you can always pass.
   - **Truth or Dare** — take turns; pass anytime.
   - **Would You Rather** — point at the same time, discover what you both like.
   - **Desire Deck** — draw a random card from the whole deck.

@@ -8,6 +8,7 @@ import TruthOrDare from './pages/TruthOrDare'
 import WouldYouRather from './pages/WouldYouRather'
 import DesireDeck from './pages/DesireDeck'
 import Whisper from './pages/Whisper'
+import Dice from './pages/Dice'
 import Desires from './pages/Desires'
 import Toys from './pages/Toys'
 import DateNight from './pages/DateNight'
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/games/wyr" element={<WouldYouRather />} />
         <Route path="/games/deck" element={<DesireDeck />} />
         <Route path="/games/whisper" element={<Whisper />} />
+        <Route path="/games/dice" element={<Dice />} />
         <Route path="/desires" element={<Desires />} />
         <Route path="/toys" element={<Toys />} />
         <Route path="/date-night" element={<DateNight />} />
