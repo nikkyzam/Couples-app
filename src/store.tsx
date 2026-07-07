@@ -33,6 +33,7 @@ export const initialState: AppState = {
   desiresA: {},
   desiresB: {},
   favorites: [],
+  ownedToys: [],
   notes: [],
 }
 
@@ -58,6 +59,7 @@ export type Action =
   | { type: 'SET_SAFEWORD'; word: string }
   | { type: 'RECORD_PLAY' }
   | { type: 'TOGGLE_FAVORITE'; id: string }
+  | { type: 'TOGGLE_OWNED_TOY'; id: string }
   | { type: 'VOTE_DESIRE'; user: PartnerId; itemId: string; vote: Vote }
   | { type: 'SEND_NOTE'; note: LoveNote }
   | { type: 'MARK_NOTE_READ'; id: string }
@@ -111,6 +113,15 @@ export function reducer(state: AppState, action: Action): AppState {
         favorites: has
           ? state.favorites.filter((f) => f !== action.id)
           : [...state.favorites, action.id],
+      }
+    }
+    case 'TOGGLE_OWNED_TOY': {
+      const has = state.ownedToys.includes(action.id)
+      return {
+        ...state,
+        ownedToys: has
+          ? state.ownedToys.filter((t) => t !== action.id)
+          : [...state.ownedToys, action.id],
       }
     }
     case 'VOTE_DESIRE': {

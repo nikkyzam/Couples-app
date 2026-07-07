@@ -108,5 +108,6 @@ export interface AppState {
   desiresA: Record<string, Vote>
   desiresB: Record<string, Vote>
   favorites: string[] // favorited prompt ids
+  ownedToys: string[] // Toy ids the couple actually has ("our toy box")
   notes: LoveNote[]
 }

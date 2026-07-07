@@ -43,10 +43,19 @@ const LENGTHS = [
 export default function DateNight() {
   const { state, dispatch } = useStore()
   const navigate = useNavigate()
-  const available = useMemo(
+  const unlockedToys = useMemo(
     () => TOYS.filter((t) => t.level <= state.unlockedLevel),
     [state.unlockedLevel],
   )
+  // Only suggest toys the couple actually owns. If they haven't marked any yet,
+  // fall back to everything unlocked so the night still works.
+  const owned = useMemo(
+    () => unlockedToys.filter((t) => state.ownedToys.includes(t.id)),
+    [unlockedToys, state.ownedToys],
+  )
+  const hasBox = owned.length > 0
+  const available = hasBox ? owned : unlockedToys
+
   const [stage, setStage] = useState<Stage>('scene')
   const [totalMin, setTotalMin] = useState<number | null>(null) // null until chosen; 0 = freeflow
   const [toy, setToy] = useState<Toy | null>(
@@ -267,6 +276,24 @@ export default function DateNight() {
                 )
               })}
             </div>
+            <p className="mt-4 text-center text-xs text-plum-300/60">
+              {hasBox ? (
+                <>
+                  Showing the toys in your box.{' '}
+                  <Link to="/toys" className="font-semibold text-ember-300">
+                    Edit
+                  </Link>
+                </>
+              ) : (
+                <>
+                  Tip: mark the toys you have in{' '}
+                  <Link to="/toys" className="font-semibold text-ember-300">
+                    Explore
+                  </Link>{' '}
+                  and this list becomes just yours.
+                </>
+              )}
+            </p>
           </Step>
         )}
 

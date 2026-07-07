@@ -13,6 +13,7 @@ import AuthScreen from './AuthScreen'
 import LinkScreen from './LinkScreen'
 
 const FAV_KEY = 'kindle.favorites'
+const OWNED_KEY = 'kindle.ownedToys'
 
 interface CoupleRow {
   id: string
@@ -46,6 +47,14 @@ interface VoteRow {
 function loadFavorites(): string[] {
   try {
     return JSON.parse(localStorage.getItem(FAV_KEY) || '[]')
+  } catch {
+    return []
+  }
+}
+
+function loadOwnedToys(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(OWNED_KEY) || '[]')
   } catch {
     return []
   }
@@ -105,6 +114,7 @@ function buildState(
     desiresA,
     desiresB,
     favorites: loadFavorites(),
+    ownedToys: loadOwnedToys(),
     notes: mappedNotes,
   }
 }
@@ -237,6 +247,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
           // Favorites are device-local by design.
           localStorage.setItem(FAV_KEY, JSON.stringify(stateRef.current.favorites))
           break
+        case 'TOGGLE_OWNED_TOY':
+          localStorage.setItem(OWNED_KEY, JSON.stringify(stateRef.current.ownedToys))
+          break
         case 'COMPLETE_ONBOARDING': {
           // Used by Settings to rename — only ever update your own profile.
           const mine = action.payload.accounts?.[prev.activeUser]
@@ -259,8 +272,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         return
       }
       localDispatch(action)
-      // TOGGLE_FAVORITE persists after the reducer runs, so defer to next tick.
-      if (action.type === 'TOGGLE_FAVORITE') {
+      // These persist from the *updated* mirror, so defer to the next tick.
+      if (action.type === 'TOGGLE_FAVORITE' || action.type === 'TOGGLE_OWNED_TOY') {
         setTimeout(() => persist(action), 0)
       } else {
         persist(action)

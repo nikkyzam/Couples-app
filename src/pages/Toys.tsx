@@ -5,41 +5,90 @@ import { SPICE_META, type Toy } from '../types'
 import { SectionTitle, LevelBadge, Button } from '../components/ui'
 
 export default function Toys() {
-  const { state } = useStore()
+  const { state, dispatch } = useStore()
   const [open, setOpen] = useState<Toy | null>(null)
-  const toys = TOYS.filter((t) => t.level <= state.unlockedLevel)
+  const [tab, setTab] = useState<'all' | 'box'>('all')
+
+  const owned = state.ownedToys
+  const isOwned = (id: string) => owned.includes(id)
+  const toggleOwned = (id: string) => dispatch({ type: 'TOGGLE_OWNED_TOY', id })
+
+  const unlocked = TOYS.filter((t) => t.level <= state.unlockedLevel)
+  const toys = tab === 'box' ? unlocked.filter((t) => isOwned(t.id)) : unlocked
   const locked = TOYS.filter((t) => t.level > state.unlockedLevel)
+  const ownedCount = unlocked.filter((t) => isOwned(t.id)).length
 
   return (
     <div>
       <SectionTitle
         eyebrow="No pressure, just curiosity"
         title="Toy Explorer"
-        sub="Friendly intros to toys and props — always body-safe, always your choice."
+        sub="Tap ✓ on the ones you have — your Date Night will only ever suggest toys from your box."
       />
 
-      <div className="grid grid-cols-2 gap-3">
-        {toys.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setOpen(t)}
-            className="card-glass animate-float-in flex flex-col rounded-3xl p-4 text-left transition hover:bg-white/10 active:scale-[0.98]"
-          >
-            <span className="text-4xl">{t.emoji}</span>
-            <span className="mt-2 font-semibold text-white">{t.name}</span>
-            <span className="mt-0.5 text-xs text-plum-200/70">{t.tagline}</span>
-            <span className="mt-2">
-              {t.beginnerFriendly && (
-                <span className="rounded-full bg-green-400/15 px-2 py-0.5 text-[10px] font-semibold text-green-300">
-                  beginner-friendly
-                </span>
-              )}
-            </span>
-          </button>
-        ))}
+      {/* All vs. our toy box */}
+      <div className="mb-5 flex items-center gap-2 rounded-2xl bg-white/5 p-1 text-sm">
+        <button
+          onClick={() => setTab('all')}
+          className={`flex-1 rounded-xl py-2 font-semibold transition ${tab === 'all' ? 'bg-white/10 text-white' : 'text-plum-300'}`}
+        >
+          All toys
+        </button>
+        <button
+          onClick={() => setTab('box')}
+          className={`flex-1 rounded-xl py-2 font-semibold transition ${tab === 'box' ? 'bg-white/10 text-white' : 'text-plum-300'}`}
+        >
+          🧰 Our toy box{ownedCount > 0 ? ` (${ownedCount})` : ''}
+        </button>
       </div>
 
-      {locked.length > 0 && (
+      {toys.length === 0 && tab === 'box' ? (
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
+          <div className="text-4xl">🧰</div>
+          <p className="mt-2 font-semibold text-white">Your toy box is empty</p>
+          <p className="mt-1 text-sm text-plum-200/70">
+            Switch to <span className="font-semibold">All toys</span> and tap “We have this”
+            on the ones you own.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {toys.map((t) => {
+            const mine = isOwned(t.id)
+            return (
+              <div
+                key={t.id}
+                className={`animate-float-in flex flex-col rounded-3xl border p-4 transition ${
+                  mine
+                    ? 'border-ember-400/50 bg-ember-500/10'
+                    : 'card-glass border-transparent'
+                }`}
+              >
+                <button
+                  onClick={() => setOpen(t)}
+                  className="flex flex-1 flex-col text-left"
+                >
+                  <span className="text-4xl">{t.emoji}</span>
+                  <span className="mt-2 font-semibold text-white">{t.name}</span>
+                  <span className="mt-0.5 text-xs text-plum-200/70">{t.tagline}</span>
+                </button>
+                <button
+                  onClick={() => toggleOwned(t.id)}
+                  className={`mt-3 rounded-xl py-1.5 text-xs font-semibold transition ${
+                    mine
+                      ? 'bg-ember-500/30 text-ember-100'
+                      : 'bg-white/5 text-plum-200 hover:bg-white/10'
+                  }`}
+                >
+                  {mine ? '✓ In our box' : '＋ We have this'}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {tab === 'all' && locked.length > 0 && (
         <div className="mt-6">
           <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/60">
             Unlocks as you level up
@@ -101,8 +150,18 @@ export default function Toys() {
               </div>
             </div>
 
-            <Button className="mt-6 w-full" onClick={() => setOpen(null)}>
-              Got it
+            <button
+              onClick={() => toggleOwned(open.id)}
+              className={`mt-6 w-full rounded-2xl py-3 font-semibold transition ${
+                isOwned(open.id)
+                  ? 'bg-ember-500/25 text-ember-100'
+                  : 'bg-white/10 text-white hover:bg-white/15'
+              }`}
+            >
+              {isOwned(open.id) ? '✓ In our toy box' : '＋ Add to our toy box'}
+            </button>
+            <Button variant="ghost" className="mt-2 w-full" onClick={() => setOpen(null)}>
+              Close
             </Button>
           </div>
         </div>

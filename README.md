@@ -38,7 +38,10 @@ one of two modes:
     (your "no"s are never shown to your partner). This is the safe, pressure-free way
     to discover shared interests — including toys like vibrators and dildos.
 - **Toy Explorer** — friendly, judgment-free intros to toys & props, always leading
-  with body-safety and communication. Higher-level toys unlock as you progress.
+  with body-safety and communication. Higher-level toys unlock as you progress. Couples
+  tap **"We have this"** to build **their toy box**, and Date Night then only ever
+  suggests toys they actually own (falling back to all unlocked toys if the box is
+  empty). The toy box is stored on the device.
 - **Love Notes** — each partner has an inbox; leave sweet, flirty, or bold notes for
   each other. Switch profiles with the button in the top-right.
 - **The Climax Guide** — a warm, communication-first playbook focused on her pleasure
