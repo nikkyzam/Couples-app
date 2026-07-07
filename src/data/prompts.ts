@@ -122,4 +122,30 @@ export const WOULD_YOU_RATHER: Prompt[] = [
   { id: 'w8', level: 4, category: 'adventure', text: 'try a new position', altText: 'try a new location in the house' },
   { id: 'w9', level: 5, category: 'toys', text: 'introduce a dildo to our play', altText: 'introduce a couples toy we both feel' },
   { id: 'w10', level: 5, category: 'adventure', text: 'act out my fantasy tonight', altText: 'act out your fantasy tonight' },
+
+  // Level 1 · Cozy
+  { id: 'w11', level: 1, category: 'connection', text: 'a cozy movie night in', altText: 'a walk under the stars' },
+  { id: 'w12', level: 1, category: 'connection', text: 'breakfast in bed', altText: 'a candlelit dinner' },
+  { id: 'w13', level: 1, category: 'flirt', text: 'a long hug from behind', altText: 'a surprise kiss on the neck' },
+
+  // Level 2 · Flirty
+  { id: 'w14', level: 2, category: 'flirt', text: 'a playful striptease', altText: 'a slow sensual massage' },
+  { id: 'w15', level: 2, category: 'flirt', text: 'me reading you a naughty text', altText: 'me describing my dream date with you' },
+  { id: 'w16', level: 2, category: 'flirt', text: 'me in your favorite outfit', altText: 'me in nothing but a robe' },
+
+  // Level 3 · Warm
+  { id: 'w17', level: 3, category: 'touch', text: 'slow kisses down your neck', altText: 'fingertips slowly down your back' },
+  { id: 'w18', level: 3, category: 'touch', text: 'a blindfold and surprises', altText: 'lights on and locked eyes' },
+  { id: 'w19', level: 3, category: 'touch', text: 'teasing until you can barely wait', altText: 'giving in the moment you ask' },
+
+  // Level 4 · Spicy
+  { id: 'w20', level: 4, category: 'toys', text: 'a warming massage oil', altText: 'a buzzing little vibrator' },
+  { id: 'w21', level: 4, category: 'adventure', text: 'try it somewhere new in the house', altText: 'try a brand-new position' },
+  { id: 'w22', level: 4, category: 'touch', text: 'you take the lead tonight', altText: 'I take the lead tonight' },
+
+  // Level 5 · Adventurous
+  { id: 'w23', level: 5, category: 'toys', text: 'a wand massager', altText: 'a couples toy we both feel' },
+  { id: 'w24', level: 5, category: 'adventure', text: 'soft restraints on you', altText: 'soft restraints on me' },
+  { id: 'w25', level: 5, category: 'adventure', text: 'a whole night of teasing', altText: 'no rules at all tonight' },
+  { id: 'w26', level: 5, category: 'toys', text: 'introduce a toy slowly and gently', altText: 'let me surprise you with one' },
 ]
