@@ -6,10 +6,12 @@ import { availablePrompts, pickRandom } from '../lib/play'
 import type { Prompt } from '../types'
 import { Button, LevelBadge } from '../components/ui'
 import SafeWordBar from '../components/SafeWordBar'
+import { useSpeech } from '../lib/useSpeech'
 
 export default function WouldYouRather() {
   const { state, dispatch } = useStore()
   const navigate = useNavigate()
+  const { supported, speak, prefs } = useSpeech()
   const pool = useMemo(
     () => availablePrompts(WOULD_YOU_RATHER, state.unlockedLevel),
     [state.unlockedLevel],
@@ -17,10 +19,16 @@ export default function WouldYouRather() {
   const [current, setCurrent] = useState<Prompt | null>(() => pickRandom(pool) ?? null)
   const [picked, setPicked] = useState<'a' | 'b' | null>(null)
 
+  const sayCurrent = (force = false) => {
+    if (current) speak(`Would you rather ${current.text}, or ${current.altText}?`, { force })
+  }
+
   function next() {
     setPicked(null)
-    setCurrent(pickRandom(pool, current?.id) ?? null)
+    const n = pickRandom(pool, current?.id) ?? null
+    setCurrent(n)
     dispatch({ type: 'RECORD_PLAY' })
+    if (n && prefs.enabled) speak(`Would you rather ${n.text}, or ${n.altText}?`)
   }
 
   return (
@@ -39,9 +47,20 @@ export default function WouldYouRather() {
       <div className="flex flex-1 flex-col justify-center gap-4 py-6">
         {current ? (
           <div className="animate-flip space-y-4">
-            <p className="text-center text-sm font-semibold uppercase tracking-widest text-ember-300">
-              Would you rather…
-            </p>
+            <div className="flex items-center justify-center gap-2">
+              <p className="text-center text-sm font-semibold uppercase tracking-widest text-ember-300">
+                Would you rather…
+              </p>
+              {supported && (
+                <button
+                  onClick={() => sayCurrent(true)}
+                  className="text-lg"
+                  title="Hear it"
+                >
+                  🔊
+                </button>
+              )}
+            </div>
             <button
               onClick={() => setPicked('a')}
               className={`w-full rounded-3xl border p-6 text-lg font-medium transition ${

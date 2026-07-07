@@ -6,10 +6,12 @@ import { availablePrompts, pickRandom } from '../lib/play'
 import { SPICE_META, type Prompt } from '../types'
 import { Button, LevelBadge } from '../components/ui'
 import SafeWordBar from '../components/SafeWordBar'
+import { useSpeech } from '../lib/useSpeech'
 
 export default function DesireDeck() {
   const { state, dispatch } = useStore()
   const navigate = useNavigate()
+  const { supported, speak, prefs } = useSpeech()
 
   const deck = useMemo(
     () => [
@@ -28,6 +30,7 @@ export default function DesireDeck() {
       setCard(next)
       setFlipped(true)
       dispatch({ type: 'RECORD_PLAY' })
+      if (prefs.enabled) speak(next.text)
     }
   }
 
@@ -84,6 +87,11 @@ export default function DesireDeck() {
             <Button className="flex-1" onClick={drawCard}>
               Draw again 🃏
             </Button>
+            {supported && (
+              <Button variant="soft" onClick={() => speak(card.text, { force: true })}>
+                🔊
+              </Button>
+            )}
             <Button
               variant="soft"
               onClick={() => dispatch({ type: 'TOGGLE_FAVORITE', id: card.id })}

@@ -6,10 +6,12 @@ import { availablePrompts, pickRandom } from '../lib/play'
 import type { PartnerId, Prompt } from '../types'
 import { Button, LevelBadge } from '../components/ui'
 import SafeWordBar from '../components/SafeWordBar'
+import { useSpeech } from '../lib/useSpeech'
 
 export default function TruthOrDare() {
   const { state, dispatch } = useStore()
   const navigate = useNavigate()
+  const { supported, speak, prefs } = useSpeech()
   const [turn, setTurn] = useState<PartnerId>('A')
   const [current, setCurrent] = useState<Prompt | null>(null)
   const [kind, setKind] = useState<'truth' | 'dare' | null>(null)
@@ -25,6 +27,10 @@ export default function TruthOrDare() {
     if (next) {
       setKind(type)
       setCurrent(next)
+      // Read the prompt aloud if the guided voice is on.
+      if (prefs.enabled) {
+        speak(`${type === 'truth' ? 'Truth.' : 'Dare.'} ${next.text}`)
+      }
     }
   }
 
@@ -100,6 +106,19 @@ export default function TruthOrDare() {
               >
                 {isFav ? '❤️' : '🤍'}
               </button>
+              {supported && (
+                <button
+                  onClick={() =>
+                    speak(`${kind === 'truth' ? 'Truth.' : 'Dare.'} ${current.text}`, {
+                      force: true,
+                    })
+                  }
+                  className="grid h-12 w-12 place-items-center rounded-full bg-white/5 text-xl"
+                  title="Hear it"
+                >
+                  🔊
+                </button>
+              )}
               <Button className="flex-1" onClick={complete}>
                 Done ✓
               </Button>
