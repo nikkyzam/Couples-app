@@ -35,6 +35,8 @@ const LENGTHS = [
   { min: 30, label: 'Take our time', sub: '~30 min', rec: true },
   { min: 45, label: 'A long, slow evening', sub: '~45 min' },
   { min: 60, label: 'All night', sub: '~60 min' },
+  { min: 90, label: 'Lose track of time', sub: '~90 min' },
+  { min: 120, label: 'The whole evening', sub: '~2 hours' },
   { min: 0, label: 'Freeflow', sub: 'no timer' },
 ]
 
