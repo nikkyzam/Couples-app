@@ -11,6 +11,9 @@ export default function AuthScreen() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Shows the "resend confirmation" option once we know an email is unconfirmed —
+  // either right after sign-up, or when a sign-in fails because it isn't confirmed.
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false)
 
   async function submit() {
     setBusy(true)
@@ -29,13 +32,41 @@ export default function AuthScreen() {
         if (!data.session) {
           setMsg('Check your email to confirm your account, then sign in.')
           setMode('in')
+          setAwaitingConfirm(true)
         }
       } else {
         const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password })
         if (error) throw error
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong.')
+      const message = e instanceof Error ? e.message : 'Something went wrong.'
+      // Supabase blocks sign-in until the address is confirmed — surface the resend.
+      if (/confirm/i.test(message)) setAwaitingConfirm(true)
+      setError(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Re-send the sign-up confirmation email (with the same corrected redirect).
+  async function resend() {
+    if (!email.trim()) {
+      setError('Enter your email above first, then tap resend.')
+      return
+    }
+    setBusy(true)
+    setError(null)
+    setMsg(null)
+    try {
+      const { error } = await sb.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+        options: { emailRedirectTo },
+      })
+      if (error) throw error
+      setMsg('Sent again — check your inbox (and your spam folder).')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not resend just now. Try again shortly.')
     } finally {
       setBusy(false)
     }
@@ -88,6 +119,16 @@ export default function AuthScreen() {
       >
         {mode === 'up' ? 'Already have an account? Sign in' : 'New here? Create an account'}
       </button>
+
+      {awaitingConfirm && (
+        <button
+          onClick={resend}
+          disabled={busy}
+          className="mt-3 text-center text-sm text-ember-300 disabled:opacity-40"
+        >
+          Didn’t get the email? Resend confirmation
+        </button>
+      )}
 
       <p className="mt-8 text-center text-xs text-plum-300/50">
         Passwords must be at least 6 characters. Your data is private to you and your partner.
