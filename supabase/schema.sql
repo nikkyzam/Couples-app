@@ -21,6 +21,8 @@ create table if not exists public.couples (
   cycle_length        int,
   cycle_period_length int,
   cycle_owner         text,  -- 'A' | 'B' — whose cycle it is
+  cycle_reminder_last_sent date,  -- de-dupes the daily period-reminder push
+  anniversary    date,  -- optional "together since" date
   created_at     timestamptz not null default now()
 );
 
@@ -32,6 +34,8 @@ alter table public.couples add column if not exists cycle_last_start    date;
 alter table public.couples add column if not exists cycle_length        int;
 alter table public.couples add column if not exists cycle_period_length int;
 alter table public.couples add column if not exists cycle_owner         text;
+alter table public.couples add column if not exists cycle_reminder_last_sent date;
+alter table public.couples add column if not exists anniversary         date;
 
 -- Each member is one authenticated user, tied to a slot ('A' or 'B').
 create table if not exists public.members (
@@ -41,6 +45,14 @@ create table if not exists public.members (
   emoji        text not null default '💜',
   slot         text not null check (slot in ('A', 'B')),
   primary key (couple_id, user_id)
+);
+
+-- Throttling log for join_couple — prevents brute-forcing invite codes. Rows
+-- older than a day are pruned opportunistically by join_couple itself.
+create table if not exists public.join_attempts (
+  id           bigint generated always as identity primary key,
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  attempted_at timestamptz not null default now()
 );
 
 -- Private notes between the two partners.
@@ -64,6 +76,18 @@ create table if not exists public.plans (
   title      text not null,
   note       text,
   done       boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- Shared journal / gratitude log — not addressed to anyone; both partners see
+-- every entry as soon as it's written (unlike notes, which are private messages).
+create table if not exists public.journal_entries (
+  id         uuid primary key default gen_random_uuid(),
+  couple_id  uuid not null references public.couples(id) on delete cascade,
+  author     uuid not null references auth.users(id) on delete cascade,
+  text       text not null,
+  mood       text not null default '💛',
+  photo_url  text,
   created_at timestamptz not null default now()
 );
 
@@ -104,8 +128,10 @@ $$;
 -- ─────────────────────────────────────────────────────────────────────────────
 alter table public.couples            enable row level security;
 alter table public.members            enable row level security;
+alter table public.join_attempts      enable row level security;
 alter table public.notes              enable row level security;
 alter table public.plans              enable row level security;
+alter table public.journal_entries    enable row level security;
 alter table public.push_subscriptions enable row level security;
 alter table public.desire_votes       enable row level security;
 
@@ -127,6 +153,10 @@ create policy notes_rw on public.notes
 
 drop policy if exists plans_rw on public.plans;
 create policy plans_rw on public.plans
+  for all using (public.is_member(couple_id)) with check (public.is_member(couple_id));
+
+drop policy if exists journal_rw on public.journal_entries;
+create policy journal_rw on public.journal_entries
   for all using (public.is_member(couple_id)) with check (public.is_member(couple_id));
 
 -- Each user manages only their own device subscriptions. (The Edge Function uses
@@ -162,8 +192,20 @@ end; $$;
 create or replace function public.join_couple(p_code text, p_name text, p_emoji text)
 returns uuid language plpgsql security definer
 set search_path = public as $$
-declare cid uuid; taken int;
+declare cid uuid; taken int; recent_attempts int;
 begin
+  -- Opportunistic cleanup so this table never grows unbounded.
+  delete from public.join_attempts where attempted_at < now() - interval '1 day';
+
+  -- Throttle: at most 5 attempts per user per 10 minutes, so invite codes
+  -- (6 alphanumeric chars) can't be brute-forced by guessing.
+  select count(*) into recent_attempts from public.join_attempts
+    where user_id = auth.uid() and attempted_at > now() - interval '10 minutes';
+  if recent_attempts >= 5 then
+    raise exception 'Too many attempts. Please wait a few minutes and try again.';
+  end if;
+  insert into public.join_attempts (user_id) values (auth.uid());
+
   select id into cid from public.couples where invite_code = upper(trim(p_code));
   if cid is null then
     raise exception 'That invite code doesn''t match any space.';
@@ -208,13 +250,43 @@ begin
 end; $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- Storage: a public "memories" bucket for optional Journal photos. Public read
+-- so a plain <img> tag works with no signed-URL logic; writes are restricted to
+-- couple members, enforced by convention: every object's path starts with its
+-- couple_id folder (e.g. "<couple-id>/<uuid>.jpg").
+-- ─────────────────────────────────────────────────────────────────────────────
+insert into storage.buckets (id, name, public)
+values ('memories', 'memories', true)
+on conflict (id) do nothing;
+
+drop policy if exists memories_read on storage.objects;
+create policy memories_read on storage.objects
+  for select using (bucket_id = 'memories');
+
+drop policy if exists memories_write on storage.objects;
+create policy memories_write on storage.objects
+  for insert with check (
+    bucket_id = 'memories'
+    and (storage.foldername(name))[1] ~ '^[0-9a-fA-F-]{36}$'
+    and public.is_member((storage.foldername(name))[1]::uuid)
+  );
+
+drop policy if exists memories_delete on storage.objects;
+create policy memories_delete on storage.objects
+  for delete using (
+    bucket_id = 'memories'
+    and (storage.foldername(name))[1] ~ '^[0-9a-fA-F-]{36}$'
+    and public.is_member((storage.foldername(name))[1]::uuid)
+  );
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Realtime: broadcast row changes so both phones update live.
 -- Idempotent so this whole file is safe to re-run (e.g. on every app startup).
 -- ─────────────────────────────────────────────────────────────────────────────
 do $$
 declare t text;
 begin
-  foreach t in array array['notes', 'plans', 'desire_votes', 'couples', 'members'] loop
+  foreach t in array array['notes', 'plans', 'journal_entries', 'desire_votes', 'couples', 'members'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

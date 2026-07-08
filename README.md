@@ -38,7 +38,8 @@ one of two modes:
     starters when a blank page is scarier than finishing a sentence, or — if saying it
     out loud is still too much — **send it as a private note** instead. A personal,
     on-device **confidence meter** turns every attempt into a little win, so talking
-    dirty gets easier one whisper at a time.
+    dirty gets easier one whisper at a time. Partners **take turns** (like Truth or
+    Dare) — say your line, then it's your partner's turn to whisper back.
   - **Love Dice** — roll three slot-machine reels — an *action*, a *spot*, and a
     *how/how-long* — that combine into one playful instruction ("Kiss their neck,
     slowly."). Every face is capped at your comfort ceiling, the guided voice can
@@ -49,6 +50,8 @@ one of two modes:
   - **Yes / No / Maybe** — vote privately; only your *mutual yeses* are ever revealed
     (your "no"s are never shown to your partner). This is the safe, pressure-free way
     to discover shared interests — including toys like vibrators and dildos.
+  - **Favorites** — every truth/dare you heart is saved to one place (Games → ❤️
+    Favorites) so the ones you loved are easy to find and replay later.
 - **Toy Explorer** — friendly, judgment-free intros to toys & props, always leading
   with body-safety and communication. Higher-level toys unlock as you progress. Couples
   tap **"We have this"** to build **their toy box**, and Date Night then only ever
@@ -64,20 +67,32 @@ one of two modes:
   web notifications only fire once it's installed.
 - **The Climax Guide** — a warm, communication-first playbook focused on her pleasure
   and finishing feeling amazing.
+- **Home mood check-in** — "How are you feeling tonight?" A one-tap mood picker (Tired
+  / Cozy / Playful / Bold) routes straight to a fitting, low-pressure activity — so
+  the shy partner never has to *decide* to be bold, just say how they feel.
 - **Planner** — plan your time together and follow the rhythm of the month. A shared
   **schedule** lets either partner put date nights and intimate plans on the calendar
-  (with an optional time, a note, and quick idea chips), tick them off, and keep a
-  history. An optional **cycle tracker** for whichever partner menstruates turns three
-  numbers (last period start, cycle length, period length) into a live read on the
-  current **phase**, **cycle day**, **next-period countdown**, and an estimated
-  **fertile window** — with a one-tap "period started today". In synced mode both the
-  schedule and cycle are **shared between phones**. Cycle predictions are estimates for
-  awareness and planning — **not** a form of contraception — and stay private to your space.
+  (with an optional time, a note, and quick idea chips covering everything from just
+  talking, cuddling, and kissing to oral, toys, roleplay, and more), tick them off, and
+  keep a history. A **"Together" tracker** shows how long you've been a couple (years /
+  months / days, and a countdown to your next anniversary) from a one-time "together
+  since" date. An optional **cycle tracker** for whichever partner menstruates turns
+  three numbers (last period start, cycle length, period length) into a live read on
+  the current **phase**, **cycle day**, **next-period countdown**, and an estimated
+  **fertile window** — with a one-tap "period started today". In synced mode the
+  schedule, together tracker, and cycle are all **shared between phones**. Cycle
+  predictions are estimates for awareness and planning — **not** a form of
+  contraception — and stay private to your space.
 - **Gifts (Treat Yourselves)** — a curated catalog of intimate gift ideas across toys,
   lingerie, sensory extras, experiences, and romance. Either partner **hearts** the ones
   they want into a **shared list** (synced between phones), and **Shop** opens a neutral
   product search in the browser — purchases happen on that store, never inside Kindle,
   and the saved list stays private to your space.
+- **Journal** — a shared gratitude log, separate from Love Notes: write "one thing I
+  loved about today" and it's visible to both of you right away, no reply expected.
+  Optionally attach a **photo** (resized/compressed on-device before it's stored, so it
+  never bloats the app) — kept locally on this device in local mode, or uploaded to a
+  private Storage bucket in synced mode. Delete your own entries anytime.
 - **Safe word bar** — on every game screen, either partner can tap to pause instantly.
 - **App lock** — optionally require a 4-digit PIN to open Kindle on this device
   (Settings → App lock). It re-locks after ~2 minutes in the background, and
@@ -188,7 +203,8 @@ have notes + votes sync live. One-time setup (~5 min):
 invite code. The other partner signs up on their phone → **Join with a code** → enters
 it. From then on both share the same synced space. (By default Supabase requires email
 confirmation on sign-up; you can turn that off in **Authentication → Providers → Email**
-for faster testing, or switch to magic-link auth.)
+for faster testing, or switch to magic-link auth.) Joining is rate-limited server-side
+(5 attempts per 10 minutes per account) so invite codes can't be brute-forced.
 
 **Joined the wrong space?** Under **Settings → Your invite code** there's a
 **"Leave and join another"** option: it removes you from your current space and drops
@@ -244,6 +260,56 @@ arrived. Dead subscriptions are pruned automatically. **On iPhone the recipient 
 have added Kindle to their Home Screen** (iOS only allows web push for installed PWAs),
 and turned Notifications on under **Settings → Notifications** (which is what registers
 their device).
+
+### Also notify on new Planner dates
+
+Same idea, for the shared schedule: get a nudge when your partner adds something to
+the Planner, even app-closed.
+
+1. Deploy the second function and reuse the **same secrets** from above:
+   ```bash
+   supabase functions deploy push-on-plan --no-verify-jwt
+   ```
+2. Add another Database Webhook: table `plans`, event **Insert**, URL pointing at
+   `.../push-on-plan`, same `x-webhook-secret` header/value as before.
+
+The push just says "🗓️ [name] scheduled something — check the Planner for [date]" —
+like notes, the specific plan title stays out of the notification (some of the
+schedule's idea chips are explicit, and nothing intimate belongs on a lock screen).
+
+### Also remind about the cycle, a day ahead
+
+A daily, couple-wide "period expected tomorrow" nudge — sent to **both** partners'
+devices, since it's shared information rather than a message from one to the other.
+This one runs on a schedule instead of a webhook, so it needs a **cron trigger**:
+
+1. Deploy it (same secrets again):
+   ```bash
+   supabase functions deploy push-cycle-reminder --no-verify-jwt
+   ```
+2. Schedule it once a day. **If your dashboard has Database → Cron Jobs** (or
+   Integrations → Cron): create a job that sends an HTTP POST to
+   `.../push-cycle-reminder` with header `x-webhook-secret` = your secret, on a
+   schedule like `0 8 * * *` (8am daily).
+   **If there's no Cron Jobs UI**, run this once in the SQL Editor instead (needs
+   the `pg_cron` and `pg_net` extensions, enabled under **Database → Extensions**):
+   ```sql
+   select cron.schedule(
+     'push-cycle-reminder-daily',
+     '0 8 * * *',
+     $$
+     select net.http_post(
+       url := 'https://<project-ref>.functions.supabase.co/push-cycle-reminder',
+       headers := jsonb_build_object('x-webhook-secret', '<your WEBHOOK_SECRET>'),
+       body := '{}'::jsonb
+     );
+     $$
+   );
+   ```
+   Replace `<project-ref>` and `<your WEBHOOK_SECRET>` with your real values.
+
+The function is idempotent — it tracks the last date it reminded each couple, so
+re-runs on the same day never double-send.
 
 ## Getting it onto the App Store & Google Play
 

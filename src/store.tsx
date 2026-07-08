@@ -11,6 +11,7 @@ import type {
   AppState,
   CyclePlan,
   DatePlan,
+  JournalEntry,
   LoveNote,
   PartnerId,
   SpiceLevel,
@@ -41,6 +42,7 @@ export const initialState: AppState = {
   plans: [],
   cycle: null,
   giftList: [],
+  journal: [],
 }
 
 // Read persisted state synchronously so the very first render already knows
@@ -63,6 +65,7 @@ export type Action =
   | { type: 'SET_ACTIVE_USER'; user: PartnerId }
   | { type: 'SET_COMFORT'; level: SpiceLevel }
   | { type: 'SET_SAFEWORD'; word: string }
+  | { type: 'SET_ANNIVERSARY'; date: string | null }
   | { type: 'RECORD_PLAY' }
   | { type: 'TOGGLE_FAVORITE'; id: string }
   | { type: 'TOGGLE_OWNED_TOY'; id: string }
@@ -76,6 +79,8 @@ export type Action =
   | { type: 'TOGGLE_PLAN_DONE'; id: string }
   | { type: 'SET_CYCLE'; cycle: CyclePlan | null }
   | { type: 'TOGGLE_GIFT'; id: string }
+  | { type: 'ADD_JOURNAL_ENTRY'; entry: JournalEntry }
+  | { type: 'DELETE_JOURNAL_ENTRY'; id: string }
   | { type: 'REPLACE'; state: AppState }
   | { type: 'RESET' }
 
@@ -110,6 +115,11 @@ export function reducer(state: AppState, action: Action): AppState {
     }
     case 'SET_SAFEWORD':
       return { ...state, profile: { ...state.profile, safeWord: action.word } }
+    case 'SET_ANNIVERSARY':
+      return {
+        ...state,
+        profile: { ...state.profile, anniversary: action.date ?? undefined },
+      }
     case 'RECORD_PLAY': {
       const playCount = state.playCount + 1
       return {
@@ -187,6 +197,10 @@ export function reducer(state: AppState, action: Action): AppState {
           : [...state.giftList, action.id],
       }
     }
+    case 'ADD_JOURNAL_ENTRY':
+      return { ...state, journal: [action.entry, ...state.journal] }
+    case 'DELETE_JOURNAL_ENTRY':
+      return { ...state, journal: state.journal.filter((j) => j.id !== action.id) }
     case 'RESET':
       return initialState
     default:
@@ -207,6 +221,9 @@ export interface Ctx {
   // Background push (cloud mode): register/remove this device's push subscription.
   enablePush?: () => Promise<void>
   disablePush?: () => Promise<void>
+  // Present in cloud mode: uploads a photo blob to Storage and resolves its
+  // public URL, for optional Journal photo attachments.
+  uploadPhoto?: (blob: Blob) => Promise<string>
 }
 
 export const StoreContext = createContext<Ctx | null>(null)

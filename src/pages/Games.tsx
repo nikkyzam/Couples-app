@@ -51,7 +51,12 @@ export default function Games() {
           title="Games"
           sub="Take turns. You can always pass or use your safe word."
         />
-        <LevelBadge level={state.unlockedLevel} />
+        <div className="flex flex-col items-end gap-2">
+          <LevelBadge level={state.unlockedLevel} />
+          <Link to="/favorites" className="text-xs text-plum-300 hover:text-white">
+            ❤️ Favorites
+          </Link>
+        </div>
       </div>
 
       {/* Date Night — a guided romantic evening */}

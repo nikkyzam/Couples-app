@@ -16,6 +16,7 @@ import type {
   LoveNote,
   DatePlan,
   CyclePlan,
+  JournalEntry,
 } from '../types'
 import AuthScreen from './AuthScreen'
 import LinkScreen from './LinkScreen'
@@ -38,6 +39,7 @@ interface CoupleRow {
   cycle_length: number | null
   cycle_period_length: number | null
   cycle_owner: string | null
+  anniversary: string | null
 }
 interface PlanRow {
   id: string
@@ -47,6 +49,14 @@ interface PlanRow {
   title: string
   note: string | null
   done: boolean
+}
+interface JournalRow {
+  id: string
+  author: string
+  text: string
+  mood: string
+  photo_url: string | null
+  created_at: string
 }
 interface MemberRow {
   couple_id: string
@@ -85,6 +95,7 @@ function buildState(
   notes: NoteRow[],
   votes: VoteRow[],
   plans: PlanRow[],
+  journalRows: JournalRow[],
   myUid: string,
 ): AppState {
   const bySlot: Partial<Record<PartnerId, MemberRow>> = {}
@@ -127,6 +138,15 @@ function buildState(
     createdBy: p.created_by ? uidToSlot[p.created_by] : undefined,
   }))
 
+  const mappedJournal: JournalEntry[] = journalRows.map((j) => ({
+    id: j.id,
+    author: uidToSlot[j.author] ?? 'A',
+    text: j.text,
+    mood: j.mood,
+    photo: j.photo_url ?? undefined,
+    createdAt: new Date(j.created_at).getTime(),
+  }))
+
   const cycle: CyclePlan | null = couple.cycle_last_start
     ? {
         lastStart: couple.cycle_last_start,
@@ -145,6 +165,7 @@ function buildState(
       comfort: couple.comfort as SpiceLevel,
       safeWord: couple.safe_word,
       onboarded: true,
+      anniversary: couple.anniversary ?? undefined,
     },
     activeUser: mySlot,
     playCount: couple.play_count,
@@ -158,6 +179,7 @@ function buildState(
     plans: mappedPlans,
     cycle,
     giftList: couple.gift_list ?? [],
+    journal: mappedJournal,
   }
 }
 
@@ -235,13 +257,14 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       return
     }
     coupleId.current = cid
-    const [{ data: couple }, { data: members }, { data: notes }, { data: votes }, { data: plans }] =
+    const [{ data: couple }, { data: members }, { data: notes }, { data: votes }, { data: plans }, { data: journalRows }] =
       await Promise.all([
         sb.from('couples').select('*').eq('id', cid).single(),
         sb.from('members').select('*').eq('couple_id', cid),
         sb.from('notes').select('*').eq('couple_id', cid).order('created_at', { ascending: false }),
         sb.from('desire_votes').select('user_id,item_id,vote').eq('couple_id', cid),
         sb.from('plans').select('*').eq('couple_id', cid).order('plan_date', { ascending: true }),
+        sb.from('journal_entries').select('*').eq('couple_id', cid).order('created_at', { ascending: false }),
       ])
     if (!couple) {
       setPhase('link')
@@ -254,6 +277,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       (notes ?? []) as NoteRow[],
       (votes ?? []) as VoteRow[],
       (plans ?? []) as PlanRow[],
+      (journalRows ?? []) as JournalRow[],
       uid,
     )
     localDispatch({ type: 'REPLACE', state: next })
@@ -273,6 +297,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       .channel(`couple-${cid}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `couple_id=eq.${cid}` }, loadBundle)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'plans', filter: `couple_id=eq.${cid}` }, loadBundle)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'journal_entries', filter: `couple_id=eq.${cid}` }, loadBundle)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'desire_votes', filter: `couple_id=eq.${cid}` }, loadBundle)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'couples', filter: `id=eq.${cid}` }, loadBundle)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'members', filter: `couple_id=eq.${cid}` }, loadBundle)
@@ -303,6 +328,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         }
         case 'SET_SAFEWORD':
           await sb.from('couples').update({ safe_word: action.word }).eq('id', cid)
+          break
+        case 'SET_ANNIVERSARY':
+          await sb.from('couples').update({ anniversary: action.date }).eq('id', cid)
           break
         case 'VOTE_DESIRE':
           if (action.vote === null) {
@@ -347,6 +375,19 @@ export function CloudProvider({ children }: { children: ReactNode }) {
           await sb.from('plans').update({ done: !p?.done }).eq('id', action.id)
           break
         }
+        case 'ADD_JOURNAL_ENTRY':
+          await sb.from('journal_entries').insert({
+            id: action.entry.id,
+            couple_id: cid,
+            author: uid,
+            text: action.entry.text,
+            mood: action.entry.mood,
+            photo_url: action.entry.photo ?? null,
+          })
+          break
+        case 'DELETE_JOURNAL_ENTRY':
+          await sb.from('journal_entries').delete().eq('id', action.id)
+          break
         case 'SET_CYCLE':
           await sb
             .from('couples')
@@ -485,6 +526,24 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
   }, [phase, enablePush])
 
+  // Upload a (already resized/compressed) photo blob for an optional Journal
+  // entry attachment. Stored under a per-couple folder so storage RLS can scope
+  // access to just this couple's members.
+  const uploadPhoto = useCallback(
+    async (blob: Blob): Promise<string> => {
+      const cid = coupleId.current
+      if (!cid) throw new Error('Not in a synced space yet.')
+      const path = `${cid}/${crypto.randomUUID()}.jpg`
+      const { error } = await sb.storage
+        .from('memories')
+        .upload(path, blob, { contentType: 'image/jpeg', upsert: false })
+      if (error) throw error
+      const { data } = sb.storage.from('memories').getPublicUrl(path)
+      return data.publicUrl
+    },
+    [sb],
+  )
+
   // Leave the current space and return to the create/join screen, so the user
   // can join a different space with a code (or start a fresh one).
   const leaveSpace = useCallback(async () => {
@@ -508,8 +567,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       leaveSpace,
       enablePush,
       disablePush,
+      uploadPhoto,
     }),
-    [state, dispatch, signOut, inviteCode, leaveSpace, enablePush, disablePush],
+    [state, dispatch, signOut, inviteCode, leaveSpace, enablePush, disablePush, uploadPhoto],
   )
 
   if (phase === 'loading') {

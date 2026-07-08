@@ -86,6 +86,7 @@ export interface Profile {
   comfort: SpiceLevel // the ceiling the couple has opted into
   safeWord: string
   onboarded: boolean
+  anniversary?: string // 'YYYY-MM-DD' — when this couple started, optional
 }
 
 // A private note one partner writes to the other.
@@ -97,6 +98,18 @@ export interface LoveNote {
   mood: string // an emoji tag
   createdAt: number
   read: boolean
+}
+
+// A shared journal entry — not addressed to anyone, both partners see it as soon
+// as it's written. A lightweight, low-pressure "one thing I loved about today"
+// reflection, distinct from Love Notes (which are private messages to one person).
+export interface JournalEntry {
+  id: string
+  author: PartnerId
+  text: string
+  mood: string // an emoji tag
+  photo?: string // optional attached photo — a data URL (local) or storage URL (cloud)
+  createdAt: number
 }
 
 // A gift idea in the "Treat Yourselves" shop. Catalog data only (not stored) —
@@ -152,4 +165,5 @@ export interface AppState {
   plans: DatePlan[] // shared sex / date schedule
   cycle: CyclePlan | null // optional period tracking (null until set up)
   giftList: string[] // Gift ids the couple wants to treat themselves to
+  journal: JournalEntry[] // shared gratitude / memory log
 }

@@ -1,7 +1,16 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { SPICE_META } from '../types'
 import { Card, LevelBadge } from '../components/ui'
+
+// A one-tap mood check-in so the shy partner never has to *decide* to be bold —
+// they just say how they feel, and it routes to a fitting, low-pressure activity.
+const MOODS = [
+  { emoji: '😴', label: 'Tired', to: '/notes/new', sub: 'Just send a sweet note' },
+  { emoji: '🫶', label: 'Cozy', to: '/games/whisper', sub: 'Ease in gently' },
+  { emoji: '😏', label: 'Playful', to: '/games', sub: 'Pick a game together' },
+  { emoji: '🔥', label: 'Bold', to: '/games/dice', sub: 'Let fate decide' },
+]
 
 const QUICK = [
   { to: '/games/whisper', label: 'Whisper', emoji: '🫦', sub: 'Dirty talk, ease in gently' },
@@ -14,6 +23,7 @@ const QUICK = [
 
 export default function Home() {
   const { state } = useStore()
+  const navigate = useNavigate()
   const { profile, unlockedLevel, playCount, activeUser } = state
   const meIsA = activeUser === 'A'
   const meName = profile.accounts[activeUser].name || 'you'
@@ -33,6 +43,26 @@ export default function Home() {
         <h1 className="font-display text-4xl font-bold text-white">
           {meName} {profile.accounts[activeUser].emoji}
         </h1>
+      </div>
+
+      {/* Mood check-in — no decision needed, just say how you feel */}
+      <div className="animate-float-in">
+        <h2 className="mb-2 px-1 text-sm font-semibold uppercase tracking-widest text-plum-300/70">
+          How are you feeling tonight?
+        </h2>
+        <div className="grid grid-cols-4 gap-2">
+          {MOODS.map((m) => (
+            <button
+              key={m.label}
+              onClick={() => navigate(m.to)}
+              title={m.sub}
+              className="card-glass flex flex-col items-center gap-1 rounded-2xl py-3 transition hover:bg-white/10 active:scale-95"
+            >
+              <span className="text-2xl">{m.emoji}</span>
+              <span className="text-[11px] font-medium text-plum-100">{m.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Date Night hero — a romantic guided evening */}
@@ -56,23 +86,31 @@ export default function Home() {
         </div>
       </Link>
 
-      {/* Planner + Gifts */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Planner + Gifts + Journal */}
+      <div className="grid grid-cols-3 gap-3">
         <Link
           to="/planner"
-          className="card-glass animate-float-in flex flex-col gap-1 rounded-3xl p-4 transition hover:bg-white/10 active:scale-[0.98]"
+          className="card-glass animate-float-in flex flex-col items-center gap-1 rounded-3xl p-3 text-center transition hover:bg-white/10 active:scale-[0.98]"
         >
-          <span className="text-3xl">🗓️</span>
-          <span className="mt-1 font-semibold text-white">Planner</span>
-          <span className="text-xs text-plum-200/70">Schedule &amp; cycle</span>
+          <span className="text-2xl">🗓️</span>
+          <span className="mt-1 text-sm font-semibold text-white">Planner</span>
+          <span className="text-[11px] text-plum-200/70">Schedule &amp; cycle</span>
         </Link>
         <Link
           to="/gifts"
-          className="card-glass animate-float-in flex flex-col gap-1 rounded-3xl p-4 transition hover:bg-white/10 active:scale-[0.98]"
+          className="card-glass animate-float-in flex flex-col items-center gap-1 rounded-3xl p-3 text-center transition hover:bg-white/10 active:scale-[0.98]"
         >
-          <span className="text-3xl">🎁</span>
-          <span className="mt-1 font-semibold text-white">Gifts</span>
-          <span className="text-xs text-plum-200/70">Treat yourselves</span>
+          <span className="text-2xl">🎁</span>
+          <span className="mt-1 text-sm font-semibold text-white">Gifts</span>
+          <span className="text-[11px] text-plum-200/70">Treat yourselves</span>
+        </Link>
+        <Link
+          to="/journal"
+          className="card-glass animate-float-in flex flex-col items-center gap-1 rounded-3xl p-3 text-center transition hover:bg-white/10 active:scale-[0.98]"
+        >
+          <span className="text-2xl">📔</span>
+          <span className="mt-1 text-sm font-semibold text-white">Journal</span>
+          <span className="text-[11px] text-plum-200/70">Little moments</span>
         </Link>
       </div>
 

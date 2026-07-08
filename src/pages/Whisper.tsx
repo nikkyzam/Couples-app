@@ -54,9 +54,12 @@ export default function Whisper() {
   const navigate = useNavigate()
   const { supported, speak, prefs } = useSpeech()
 
-  const me = state.activeUser
-  const other: PartnerId = me === 'A' ? 'B' : 'A'
   const names = state.profile.accounts
+
+  // Reciprocal turns — like Truth or Dare, partners alternate whispering to each
+  // other on the same device. Independent of the global "active user" switch.
+  const [turn, setTurn] = useState<PartnerId>('A')
+  const other: PartnerId = turn === 'A' ? 'B' : 'A'
 
   // Boldness dial — starts as gentle as possible, never exceeds the couple's ceiling.
   const [heat, setHeat] = useState<SpiceLevel>(1)
@@ -126,6 +129,7 @@ export default function Whisper() {
     setCheer(CHEERS[Math.floor(Math.random() * CHEERS.length)])
     // Feed the shared progression, just like the other games.
     dispatch({ type: 'RECORD_PLAY' })
+    setTurn(other)
   }
 
   // Escape hatch for the truly shy: send the exact line as a private note, so it
@@ -134,7 +138,7 @@ export default function Whisper() {
     if (!spoken) return
     const note: LoveNote = {
       id: crypto.randomUUID(),
-      from: me,
+      from: turn,
       to: other,
       text: spoken,
       mood: '🫦',
@@ -147,6 +151,7 @@ export default function Whisper() {
     const n = confidence + 1
     setConfidence(n)
     saveConfidence(n)
+    setTurn(other)
   }
 
   const hasSofter = mode === 'lines' && !!line?.softer && !showSofter
@@ -164,6 +169,14 @@ export default function Whisper() {
       <p className="mt-1 text-sm text-plum-200/80">
         Dirty talk, one tiny brave step at a time. Hear it first, whisper it, or
         just send it — no pressure, ever.
+      </p>
+
+      <p className="mt-2 text-sm text-plum-200/80">
+        <span className="font-semibold text-ember-300">
+          {names[turn].emoji} {names[turn].name || `Partner ${turn === 'A' ? 1 : 2}`}
+        </span>
+        , it's your turn to whisper to{' '}
+        {names[other].name || `Partner ${other === 'A' ? 1 : 2}`}.
       </p>
 
       {/* Confidence meter — makes trying feel like a game you're winning */}

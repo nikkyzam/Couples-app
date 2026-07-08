@@ -17,6 +17,8 @@ import NewNote from './pages/NewNote'
 import Pleasure from './pages/Pleasure'
 import Planner from './pages/Planner'
 import Gifts from './pages/Gifts'
+import Favorites from './pages/Favorites'
+import Journal from './pages/Journal'
 import Settings from './pages/Settings'
 
 export default function App() {
@@ -50,6 +52,8 @@ export default function App() {
         <Route path="/pleasure" element={<Pleasure />} />
         <Route path="/planner" element={<Planner />} />
         <Route path="/gifts" element={<Gifts />} />
+        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/journal" element={<Journal />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

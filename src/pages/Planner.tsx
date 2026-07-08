@@ -4,15 +4,26 @@ import { useStore } from '../store'
 import type { CyclePlan, DatePlan, PartnerId } from '../types'
 import { Button, Card, SectionTitle } from '../components/ui'
 import { cycleInfo, PHASE_META, prettyDate, todayISO } from '../lib/cycle'
+import { togetherInfo } from '../lib/anniversary'
 
 const IDEAS = [
   'Date night 🕯️',
+  'Just talk & connect 💬',
+  'Cuddle & kiss 💋',
+  'Make out session',
   'Slow morning in bed',
-  'Try something new',
+  'Oral only night',
+  'Slow foreplay',
+  'Massage 💆',
+  'Shower together 🚿',
+  'Bath together 🛁',
   'Whisper game 🫦',
-  'Long massage',
-  'Shower together',
-  'Weekend getaway',
+  'Toy night 🎁',
+  'Roleplay',
+  'Quickie',
+  'Morning intimacy ☀️',
+  'Try something new ✨',
+  'Weekend getaway 🧳',
 ]
 
 function sortKey(p: DatePlan) {
@@ -58,6 +69,20 @@ export default function Planner() {
     setTime('')
     setDate(todayISO())
     setAdding(false)
+  }
+
+  // ── Together since (anniversary) ─────────────────────────────────────
+  const [editingAnniversary, setEditingAnniversary] = useState(false)
+  const [anniversaryDraft, setAnniversaryDraft] = useState(
+    state.profile.anniversary ?? todayISO(),
+  )
+  const together = state.profile.anniversary
+    ? togetherInfo(state.profile.anniversary)
+    : null
+
+  function saveAnniversary() {
+    dispatch({ type: 'SET_ANNIVERSARY', date: anniversaryDraft || null })
+    setEditingAnniversary(false)
   }
 
   // ── Cycle ────────────────────────────────────────────────────────────
@@ -183,6 +208,65 @@ export default function Planner() {
               ))}
             </div>
           </details>
+        )}
+      </div>
+
+      {/* ─── Together since ─── */}
+      <div>
+        <h2 className="mb-3 px-1 text-sm font-semibold uppercase tracking-widest text-ember-300">
+          Together
+        </h2>
+        {together && !editingAnniversary ? (
+          <Card className="flex items-center justify-between">
+            <div>
+              <p className="text-2xl font-bold text-white">
+                {together.years > 0 && `${together.years}y `}
+                {(together.years > 0 || together.months > 0) && `${together.months}m `}
+                {together.days}d
+              </p>
+              <p className="text-xs text-plum-300/70">
+                {together.totalDays.toLocaleString()} days together
+              </p>
+              <p className="mt-2 text-xs text-plum-200/80">
+                💐 Next anniversary in {together.daysUntilNext}d ·{' '}
+                {prettyDate(together.nextAnniversary)}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setAnniversaryDraft(state.profile.anniversary!)
+                setEditingAnniversary(true)
+              }}
+              className="text-xs text-plum-300 hover:text-white"
+            >
+              Edit
+            </button>
+          </Card>
+        ) : (
+          <Card className="space-y-3">
+            {!state.profile.anniversary && (
+              <p className="text-sm text-plum-200/80">
+                Add the date you got together to track your milestones.
+              </p>
+            )}
+            <input
+              type="date"
+              value={anniversaryDraft}
+              max={todayISO()}
+              onChange={(e) => setAnniversaryDraft(e.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-white focus:border-ember-400 focus:outline-none"
+            />
+            <div className="flex gap-2">
+              <Button className="flex-1" onClick={saveAnniversary} disabled={!anniversaryDraft}>
+                Save
+              </Button>
+              {editingAnniversary && (
+                <Button variant="soft" onClick={() => setEditingAnniversary(false)}>
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </Card>
         )}
       </div>
 
