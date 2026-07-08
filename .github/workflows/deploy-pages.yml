@@ -35,6 +35,9 @@ jobs:
           # Optional: set to enable background push (notifications when the app is
           # closed). The PUBLIC VAPID key — safe to expose in the client bundle.
           VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+          # Optional: gates the whole deployed site behind a shared passphrase. This
+          # is a SHA-256 hash, not the passphrase itself — see .env.example.
+          VITE_SITE_PASSPHRASE_HASH: ${{ secrets.VITE_SITE_PASSPHRASE_HASH }}
         run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

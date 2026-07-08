@@ -86,6 +86,32 @@ one of two modes:
   screen offers a confirmed local reset (cloud-mode accounts are unaffected; it
   only clears this device).
 
+## Front-door passphrase (gating a public URL)
+
+GitHub Pages URLs are public — anyone with the link can open the app. If you'd
+rather strangers who stumble on it not even reach onboarding or sign-up, set a
+single shared passphrase that gates the entire app before anything loads.
+
+This is a separate, outer layer from **App lock** above: App lock is a per-device
+PIN for whoever already has access; this passphrase is the front door itself. Same
+honest caveat as App lock — it's a static site, so it's a doorbell, not a vault. A
+real passphrase (not "1234") comfortably keeps out casual visitors; it isn't meant
+to withstand a determined attacker inspecting the bundle.
+
+1. Generate the SHA-256 hash of your passphrase (the app stores the hash, never
+   the plaintext):
+   ```bash
+   node -e "console.log(require('crypto').createHash('sha256').update(process.argv[1]).digest('hex'))" "your passphrase here"
+   ```
+2. Set it as `VITE_SITE_PASSPHRASE_HASH` in `.env.local` (local dev) **and** as a
+   GitHub **repository secret** of the same name (Settings → Secrets and variables
+   → Actions) so the deployed build includes it. Push/redeploy.
+3. Leave it unset and the gate simply doesn't appear — nothing else changes.
+
+Once someone enters it correctly on a device, that device stays unlocked (it isn't
+asked again, unlike App lock's re-lock timer) — share the passphrase with your
+partner once, each installs it on their own phone.
+
 ## Run it locally
 
 ```bash

@@ -7,6 +7,7 @@ import { StoreProvider } from './store'
 import { cloudEnabled } from './cloud/supabase'
 import { CloudProvider } from './cloud/CloudProvider'
 import AppLockGate from './components/AppLockGate'
+import SiteGate from './components/SiteGate'
 
 // When Supabase is configured, run in synced multi-account mode; otherwise the
 // app works fully offline as a private, per-device experience.
@@ -14,13 +15,15 @@ const Provider = cloudEnabled ? CloudProvider : StoreProvider
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppLockGate>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <Provider>
-          <App />
-        </Provider>
-      </BrowserRouter>
-    </AppLockGate>
+    <SiteGate>
+      <AppLockGate>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <Provider>
+            <App />
+          </Provider>
+        </BrowserRouter>
+      </AppLockGate>
+    </SiteGate>
   </StrictMode>,
 )
 
