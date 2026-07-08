@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from './supabase'
+import { supabase, emailRedirectTo } from './supabase'
 import { Button } from '../components/ui'
 
 // Email + password auth. Each partner makes their own account on their own phone.
@@ -18,7 +18,11 @@ export default function AuthScreen() {
     setMsg(null)
     try {
       if (mode === 'up') {
-        const { error } = await sb.auth.signUp({ email: email.trim(), password })
+        const { error } = await sb.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { emailRedirectTo },
+        })
         if (error) throw error
         // If email confirmation is on, there's no session yet.
         const { data } = await sb.auth.getSession()

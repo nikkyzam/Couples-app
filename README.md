@@ -125,7 +125,19 @@ have notes + votes sync live. One-time setup (~5 min):
    **Manual alternative:** paste `supabase/schema.sql` into the Supabase **SQL Editor**
    and run it. (`SUPABASE_DB_URL` is a secret — it holds your DB password — but it is
    not prefixed with `VITE_`, so it never reaches the browser bundle.)
-5. `npm run build && npm run preview` (or `npm run dev`). The app now boots into the
+5. **Point confirmation emails at your real site** (otherwise the link goes to
+   `localhost`). In Supabase → **Authentication → URL Configuration**:
+   - Set **Site URL** to where the app actually lives — your deployed URL for
+     production (e.g. `https://YOUR-USERNAME.github.io/Couples-app/`), or
+     `http://localhost:5173/` while developing locally.
+   - Under **Redirect URLs**, add every origin people sign up from — e.g.
+     `https://YOUR-USERNAME.github.io/Couples-app/` **and** `http://localhost:5173/`.
+   The app already asks Supabase to send users back to whatever site they signed
+   up on (`emailRedirectTo`), but Supabase only honours URLs on this allowlist —
+   anything else silently falls back to **Site URL**, which is why an unconfigured
+   project mails a `localhost` link. (Prefer no email step at all for testing? Turn
+   off confirmation under **Authentication → Providers → Email**.)
+6. `npm run build && npm run preview` (or `npm run dev`). The app now boots into the
    sign-up screen instead of local mode.
 
 **How linking works:** one partner signs up → **Create a space** → gets a 6-character
