@@ -16,6 +16,7 @@ create table if not exists public.couples (
   play_count     int  not null default 0,
   owned_toys     text[] not null default '{}',  -- shared toy box, synced between partners
   wishlist       text[] not null default '{}',  -- toys the couple wants to buy
+  gift_list      text[] not null default '{}',  -- "treat yourselves" gift ideas both want
   cycle_last_start    date,  -- optional period tracking (null = off)
   cycle_length        int,
   cycle_period_length int,
@@ -26,6 +27,7 @@ create table if not exists public.couples (
 -- For projects created before these columns existed:
 alter table public.couples add column if not exists owned_toys text[] not null default '{}';
 alter table public.couples add column if not exists wishlist   text[] not null default '{}';
+alter table public.couples add column if not exists gift_list  text[] not null default '{}';
 alter table public.couples add column if not exists cycle_last_start    date;
 alter table public.couples add column if not exists cycle_length        int;
 alter table public.couples add column if not exists cycle_period_length int;

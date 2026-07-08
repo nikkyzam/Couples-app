@@ -40,6 +40,7 @@ export const initialState: AppState = {
   notes: [],
   plans: [],
   cycle: null,
+  giftList: [],
 }
 
 // Read persisted state synchronously so the very first render already knows
@@ -74,6 +75,7 @@ export type Action =
   | { type: 'DELETE_PLAN'; id: string }
   | { type: 'TOGGLE_PLAN_DONE'; id: string }
   | { type: 'SET_CYCLE'; cycle: CyclePlan | null }
+  | { type: 'TOGGLE_GIFT'; id: string }
   | { type: 'REPLACE'; state: AppState }
   | { type: 'RESET' }
 
@@ -176,6 +178,15 @@ export function reducer(state: AppState, action: Action): AppState {
       }
     case 'SET_CYCLE':
       return { ...state, cycle: action.cycle }
+    case 'TOGGLE_GIFT': {
+      const has = state.giftList.includes(action.id)
+      return {
+        ...state,
+        giftList: has
+          ? state.giftList.filter((g) => g !== action.id)
+          : [...state.giftList, action.id],
+      }
+    }
     case 'RESET':
       return initialState
     default:

@@ -56,21 +56,25 @@ export default function Home() {
         </div>
       </Link>
 
-      {/* Planner — schedule + cycle */}
-      <Link to="/planner" className="block">
-        <Card className="animate-float-in flex items-center gap-3 !py-4 hover:bg-white/10">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/5 text-2xl">
-            🗓️
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-white">Planner</p>
-            <p className="text-xs text-plum-200/70">
-              Schedule your time together &amp; track the cycle
-            </p>
-          </div>
-          <span className="text-plum-300">→</span>
-        </Card>
-      </Link>
+      {/* Planner + Gifts */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          to="/planner"
+          className="card-glass animate-float-in flex flex-col gap-1 rounded-3xl p-4 transition hover:bg-white/10 active:scale-[0.98]"
+        >
+          <span className="text-3xl">🗓️</span>
+          <span className="mt-1 font-semibold text-white">Planner</span>
+          <span className="text-xs text-plum-200/70">Schedule &amp; cycle</span>
+        </Link>
+        <Link
+          to="/gifts"
+          className="card-glass animate-float-in flex flex-col gap-1 rounded-3xl p-4 transition hover:bg-white/10 active:scale-[0.98]"
+        >
+          <span className="text-3xl">🎁</span>
+          <span className="mt-1 font-semibold text-white">Gifts</span>
+          <span className="text-xs text-plum-200/70">Treat yourselves</span>
+        </Link>
+      </div>
 
       {/* Level card */}
       <Card className="animate-float-in relative overflow-hidden">

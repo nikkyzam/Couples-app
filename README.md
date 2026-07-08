@@ -73,6 +73,11 @@ one of two modes:
   **fertile window** — with a one-tap "period started today". In synced mode both the
   schedule and cycle are **shared between phones**. Cycle predictions are estimates for
   awareness and planning — **not** a form of contraception — and stay private to your space.
+- **Gifts (Treat Yourselves)** — a curated catalog of intimate gift ideas across toys,
+  lingerie, sensory extras, experiences, and romance. Either partner **hearts** the ones
+  they want into a **shared list** (synced between phones), and **Shop** opens a neutral
+  product search in the browser — purchases happen on that store, never inside Kindle,
+  and the saved list stays private to your space.
 - **Safe word bar** — on every game screen, either partner can tap to pause instantly.
 - **App lock** — optionally require a 4-digit PIN to open Kindle on this device
   (Settings → App lock). It re-locks after ~2 minutes in the background, and

@@ -32,6 +32,7 @@ interface CoupleRow {
   play_count: number
   owned_toys: string[] | null
   wishlist: string[] | null
+  gift_list: string[] | null
   cycle_last_start: string | null
   cycle_length: number | null
   cycle_period_length: number | null
@@ -155,6 +156,7 @@ function buildState(
     notes: mappedNotes,
     plans: mappedPlans,
     cycle,
+    giftList: couple.gift_list ?? [],
   }
 }
 
@@ -372,6 +374,13 @@ export function CloudProvider({ children }: { children: ReactNode }) {
             .update({ wishlist: stateRef.current.wishlist })
             .eq('id', cid)
           break
+        case 'TOGGLE_GIFT':
+          // Shared "treat yourselves" list — sync so both phones match.
+          await sb
+            .from('couples')
+            .update({ gift_list: stateRef.current.giftList })
+            .eq('id', cid)
+          break
         case 'COMPLETE_ONBOARDING': {
           // Used by Settings to rename — only ever update your own profile.
           const mine = action.payload.accounts?.[prev.activeUser]
@@ -398,7 +407,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       if (
         action.type === 'TOGGLE_FAVORITE' ||
         action.type === 'TOGGLE_OWNED_TOY' ||
-        action.type === 'TOGGLE_WISHLIST_TOY'
+        action.type === 'TOGGLE_WISHLIST_TOY' ||
+        action.type === 'TOGGLE_GIFT'
       ) {
         setTimeout(() => persist(action), 0)
       } else {

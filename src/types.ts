@@ -99,6 +99,22 @@ export interface LoveNote {
   read: boolean
 }
 
+// A gift idea in the "Treat Yourselves" shop. Catalog data only (not stored) —
+// what a couple saves is just the gift's id in their shared gift list.
+export type GiftCategory = 'toy' | 'lingerie' | 'sensory' | 'experience' | 'romance'
+
+export interface Gift {
+  id: string
+  name: string
+  emoji: string
+  category: GiftCategory
+  blurb: string
+  price: 1 | 2 | 3 // rough tier: $ / $$ / $$$
+  // What to search for at a retailer when they tap "Shop". Kept as a search
+  // (not a hardcoded product URL) so links never rot and no single store is baked in.
+  search: string
+}
+
 // A shared, planned intimate date on the couple's calendar ("the sex schedule").
 export interface DatePlan {
   id: string
@@ -135,4 +151,5 @@ export interface AppState {
   notes: LoveNote[]
   plans: DatePlan[] // shared sex / date schedule
   cycle: CyclePlan | null // optional period tracking (null until set up)
+  giftList: string[] // Gift ids the couple wants to treat themselves to
 }
