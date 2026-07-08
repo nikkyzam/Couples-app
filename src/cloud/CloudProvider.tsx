@@ -11,6 +11,7 @@ import {
 import type { AppState, PartnerId, SpiceLevel, Vote, LoveNote } from '../types'
 import AuthScreen from './AuthScreen'
 import LinkScreen from './LinkScreen'
+import { showAppNotification } from '../lib/useNotifications'
 
 const FAV_KEY = 'kindle.favorites'
 
@@ -125,6 +126,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const coupleId = useRef<string | null>(null)
   const stateRef = useRef(state)
   stateRef.current = state
+  // Notification bookkeeping: which incoming notes we've already accounted for,
+  // and whether we've seeded the backlog yet (so we don't alert for every old
+  // note the first time the bundle loads).
+  const notifiedNoteIds = useRef<Set<string>>(new Set())
+  const notesSeeded = useRef(false)
 
   // Track auth session.
   useEffect(() => {
@@ -136,11 +142,40 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       setSession(s)
       if (!s) {
         coupleId.current = null
+        notesSeeded.current = false
+        notifiedNoteIds.current.clear()
         setPhase('auth')
       }
     })
     return () => sub.subscription.unsubscribe()
   }, [sb])
+
+  // Fire a gentle notification for notes newly arrived from your partner. The
+  // first load just seeds the set of known notes (no backlog spam); after that,
+  // any note we haven't seen — surfaced live by the realtime subscription —
+  // triggers one. We deliberately keep the note's text out of the alert.
+  const notifyNewNotes = useCallback((next: AppState) => {
+    const mine = next.activeUser
+    const incoming = next.notes.filter((n) => n.to === mine)
+    if (!notesSeeded.current) {
+      incoming.forEach((n) => notifiedNoteIds.current.add(n.id))
+      notesSeeded.current = true
+      return
+    }
+    const partnerName =
+      next.profile.accounts[mine === 'A' ? 'B' : 'A'].name || 'Your partner'
+    for (const n of incoming) {
+      if (notifiedNoteIds.current.has(n.id)) continue
+      notifiedNoteIds.current.add(n.id)
+      if (!n.read) {
+        void showAppNotification(
+          `💌 ${partnerName} sent you a note`,
+          'Open Kindle to read it.',
+          { tag: `note-${n.id}` },
+        )
+      }
+    }
+  }, [])
 
   // Load the couple bundle for the signed-in user.
   const loadBundle = useCallback(async () => {
@@ -166,12 +201,17 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       return
     }
     setInviteCode((couple as CoupleRow).invite_code)
-    localDispatch({
-      type: 'REPLACE',
-      state: buildState(couple as CoupleRow, (members ?? []) as MemberRow[], (notes ?? []) as NoteRow[], (votes ?? []) as VoteRow[], uid),
-    })
+    const next = buildState(
+      couple as CoupleRow,
+      (members ?? []) as MemberRow[],
+      (notes ?? []) as NoteRow[],
+      (votes ?? []) as VoteRow[],
+      uid,
+    )
+    localDispatch({ type: 'REPLACE', state: next })
+    notifyNewNotes(next)
     setPhase('ready')
-  }, [sb])
+  }, [sb, notifyNewNotes])
 
   useEffect(() => {
     if (session) loadBundle()
@@ -299,6 +339,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     const { error } = await sb.rpc('leave_couple')
     if (error) throw error
     coupleId.current = null
+    notesSeeded.current = false
+    notifiedNoteIds.current.clear()
     setInviteCode(undefined)
     localDispatch({ type: 'REPLACE', state: initialState })
     setPhase('link')

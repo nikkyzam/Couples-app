@@ -25,6 +25,19 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+// Tapping a notification focuses an open Kindle tab, or opens one if none exist.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ('focus' in client) return client.focus()
+      }
+      return self.clients.openWindow(ROOT)
+    }),
+  )
+})
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET') return

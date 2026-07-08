@@ -5,6 +5,7 @@ import { SPICE_META, type PartnerId, type SpiceLevel } from '../types'
 import { SectionTitle, Card, Button } from '../components/ui'
 import { useSpeech } from '../lib/useSpeech'
 import { useAppLock } from '../lib/useAppLock'
+import { useNotifications } from '../lib/useNotifications'
 
 const EMOJIS = ['💜', '❤️', '🧡', '💛', '💚', '💙', '🩷', '🔥', '🌙', '⭐']
 
@@ -14,6 +15,7 @@ export default function Settings() {
   const { profile } = state
   const { supported, voices, speak, prefs, setPrefs } = useSpeech()
   const lock = useAppLock()
+  const notif = useNotifications()
   const [pinDraft, setPinDraft] = useState('')
   const [pinStage, setPinStage] = useState<'idle' | 'set' | 'confirm'>('idle')
   const [firstPin, setFirstPin] = useState('')
@@ -123,6 +125,44 @@ export default function Settings() {
                 )}
               </div>
             )}
+          </Card>
+        </>
+      )}
+
+      {/* Notifications (synced mode — a heads-up when your partner writes) */}
+      {cloud && notif.supported && (
+        <>
+          <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-plum-300/70">
+            Notifications
+          </h3>
+          <Card className="mb-6">
+            <label className="flex items-center justify-between">
+              <span className="font-semibold text-white">Notify me about new notes</span>
+              <button
+                onClick={() => (notif.enabled ? notif.disable() : void notif.enable())}
+                className={`relative h-7 w-12 rounded-full transition ${notif.enabled ? 'bg-ember-500' : 'bg-white/15'}`}
+                role="switch"
+                aria-checked={notif.enabled}
+              >
+                <span
+                  className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${notif.enabled ? 'left-6' : 'left-1'}`}
+                />
+              </button>
+            </label>
+            <p className="mt-2 text-xs text-plum-300/60">
+              A gentle heads-up when your partner leaves you a note. The words stay
+              hidden — you’ll just see that one arrived.
+            </p>
+            {notif.permission === 'denied' && (
+              <p className="mt-2 text-xs text-red-300/80">
+                Notifications are blocked for Kindle in your device settings. Turn them
+                on there first, then toggle this again.
+              </p>
+            )}
+            <p className="mt-2 text-[11px] text-plum-300/50">
+              On iPhone, add Kindle to your Home Screen first — notifications only work
+              once it’s installed.
+            </p>
           </Card>
         </>
       )}

@@ -57,7 +57,11 @@ one of two modes:
   phones**. A **"To buy" tab** suggests toys to add — ranking the ones the couple
   *both* said yes to (in Yes/No/Maybe) first — and keeps a shared shopping list.
 - **Love Notes** — each partner has an inbox; leave sweet, flirty, or bold notes for
-  each other. Switch profiles with the button in the top-right.
+  each other. Switch profiles with the button in the top-right. In synced mode you can
+  opt into a **gentle notification** when your partner leaves you a note (Settings →
+  Notifications) — it only tells you a note *arrived*, never the words, so nothing
+  steamy lands on your lock screen. On iPhone, add Kindle to your Home Screen first;
+  web notifications only fire once it's installed.
 - **The Climax Guide** — a warm, communication-first playbook focused on her pleasure
   and finishing feeling amazing.
 - **Safe word bar** — on every game screen, either partner can tap to pause instantly.
