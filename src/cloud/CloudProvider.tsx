@@ -19,7 +19,8 @@ import type {
 } from '../types'
 import AuthScreen from './AuthScreen'
 import LinkScreen from './LinkScreen'
-import { showAppNotification } from '../lib/useNotifications'
+import { showAppNotification, notificationsPref } from '../lib/useNotifications'
+import { vapidPublicKey, pushSupported, urlBase64ToUint8Array } from '../lib/push'
 
 const FAV_KEY = 'kindle.favorites'
 
@@ -420,6 +421,70 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(() => sb.auth.signOut(), [sb])
 
+  // Register this device for background push (fires even when the app is closed).
+  // Best-effort: silently no-ops if no VAPID key is configured or push is
+  // unsupported — the in-app notification still works either way.
+  const enablePush = useCallback(async () => {
+    const key = vapidPublicKey()
+    if (!key || !pushSupported()) return
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+    const uid = session?.user.id
+    const cid = coupleId.current
+    if (!uid || !cid) return
+    try {
+      const reg = await navigator.serviceWorker.ready
+      let sub = await reg.pushManager.getSubscription()
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(key),
+        })
+      }
+      const json = sub.toJSON()
+      if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return
+      await sb.from('push_subscriptions').upsert(
+        {
+          endpoint: json.endpoint,
+          user_id: uid,
+          couple_id: cid,
+          p256dh: json.keys.p256dh,
+          auth: json.keys.auth,
+        },
+        { onConflict: 'endpoint' },
+      )
+    } catch {
+      /* push unavailable — in-app notifications still work */
+    }
+  }, [sb, session])
+
+  const disablePush = useCallback(async () => {
+    if (!pushSupported()) return
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) {
+        const endpoint = sub.endpoint
+        await sub.unsubscribe()
+        await sb.from('push_subscriptions').delete().eq('endpoint', endpoint)
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [sb])
+
+  // If notifications are already opted-in, make sure this device has a live push
+  // subscription once the couple bundle is loaded (endpoints can rotate).
+  useEffect(() => {
+    if (
+      phase === 'ready' &&
+      notificationsPref() &&
+      typeof Notification !== 'undefined' &&
+      Notification.permission === 'granted'
+    ) {
+      enablePush()
+    }
+  }, [phase, enablePush])
+
   // Leave the current space and return to the create/join screen, so the user
   // can join a different space with a code (or start a fresh one).
   const leaveSpace = useCallback(async () => {
@@ -434,8 +499,17 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }, [sb])
 
   const value = useMemo(
-    () => ({ state, dispatch, cloud: true, signOut, inviteCode, leaveSpace }),
-    [state, dispatch, signOut, inviteCode, leaveSpace],
+    () => ({
+      state,
+      dispatch,
+      cloud: true,
+      signOut,
+      inviteCode,
+      leaveSpace,
+      enablePush,
+      disablePush,
+    }),
+    [state, dispatch, signOut, inviteCode, leaveSpace, enablePush, disablePush],
   )
 
   if (phase === 'loading') {

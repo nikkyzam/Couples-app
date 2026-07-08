@@ -32,6 +32,9 @@ jobs:
           # and the app runs fully offline in local-only mode.
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Optional: set to enable background push (notifications when the app is
+          # closed). The PUBLIC VAPID key — safe to expose in the client bundle.
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
         run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

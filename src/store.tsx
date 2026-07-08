@@ -204,6 +204,9 @@ export interface Ctx {
   signOut?: () => void
   inviteCode?: string
   leaveSpace?: () => Promise<void>
+  // Background push (cloud mode): register/remove this device's push subscription.
+  enablePush?: () => Promise<void>
+  disablePush?: () => Promise<void>
 }
 
 export const StoreContext = createContext<Ctx | null>(null)

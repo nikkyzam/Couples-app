@@ -10,7 +10,8 @@ import { useNotifications } from '../lib/useNotifications'
 const EMOJIS = ['💜', '❤️', '🧡', '💛', '💚', '💙', '🩷', '🔥', '🌙', '⭐']
 
 export default function Settings() {
-  const { state, dispatch, cloud, inviteCode, signOut, leaveSpace } = useStore()
+  const { state, dispatch, cloud, inviteCode, signOut, leaveSpace, enablePush, disablePush } =
+    useStore()
   const navigate = useNavigate()
   const { profile } = state
   const { supported, voices, speak, prefs, setPrefs } = useSpeech()
@@ -24,6 +25,16 @@ export default function Settings() {
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [leaveError, setLeaveError] = useState('')
+
+  async function toggleNotifications() {
+    if (notif.enabled) {
+      notif.disable()
+      await disablePush?.()
+    } else {
+      const ok = await notif.enable()
+      if (ok) await enablePush?.()
+    }
+  }
 
   async function doLeave() {
     setLeaving(true)
@@ -139,7 +150,7 @@ export default function Settings() {
             <label className="flex items-center justify-between">
               <span className="font-semibold text-white">Notify me about new notes</span>
               <button
-                onClick={() => (notif.enabled ? notif.disable() : void notif.enable())}
+                onClick={() => void toggleNotifications()}
                 className={`relative h-7 w-12 rounded-full transition ${notif.enabled ? 'bg-ember-500' : 'bg-white/15'}`}
                 role="switch"
                 aria-checked={notif.enabled}

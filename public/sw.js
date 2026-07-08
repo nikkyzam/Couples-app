@@ -25,6 +25,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+// Background push — fires even when the app is fully closed. The Edge Function
+// sends a JSON payload; we show it as a notification.
+self.addEventListener('push', (event) => {
+  let data = { title: 'Kindle', body: 'You have a new note.' }
+  try {
+    if (event.data) data = { ...data, ...event.data.json() }
+  } catch {
+    if (event.data) data.body = event.data.text()
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: new URL('icon-192.png', ROOT).href,
+      badge: new URL('icon-192.png', ROOT).href,
+      tag: data.tag || 'kindle-push',
+    }),
+  )
+})
+
 // Tapping a notification focuses an open Kindle tab, or opens one if none exist.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()

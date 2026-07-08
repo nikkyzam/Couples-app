@@ -67,6 +67,18 @@ create table if not exists public.plans (
   created_at timestamptz not null default now()
 );
 
+-- Web Push subscriptions — one row per device that opted into background push.
+-- The Edge Function reads these (via the service role) to deliver notifications
+-- when the app is closed.
+create table if not exists public.push_subscriptions (
+  endpoint   text primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  couple_id  uuid not null references public.couples(id) on delete cascade,
+  p256dh     text not null,
+  auth       text not null,
+  created_at timestamptz not null default now()
+);
+
 -- Yes / No / Maybe votes, one row per user per item.
 create table if not exists public.desire_votes (
   couple_id uuid not null references public.couples(id) on delete cascade,
@@ -90,11 +102,12 @@ $$;
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Row Level Security
 -- ─────────────────────────────────────────────────────────────────────────────
-alter table public.couples      enable row level security;
-alter table public.members      enable row level security;
-alter table public.notes        enable row level security;
-alter table public.plans        enable row level security;
-alter table public.desire_votes enable row level security;
+alter table public.couples            enable row level security;
+alter table public.members            enable row level security;
+alter table public.notes              enable row level security;
+alter table public.plans              enable row level security;
+alter table public.push_subscriptions enable row level security;
+alter table public.desire_votes       enable row level security;
 
 drop policy if exists couples_rw on public.couples;
 create policy couples_rw on public.couples
@@ -115,6 +128,12 @@ create policy notes_rw on public.notes
 drop policy if exists plans_rw on public.plans;
 create policy plans_rw on public.plans
   for all using (public.is_member(couple_id)) with check (public.is_member(couple_id));
+
+-- Each user manages only their own device subscriptions. (The Edge Function uses
+-- the service-role key, which bypasses RLS, to read a partner's subscriptions.)
+drop policy if exists push_self on public.push_subscriptions;
+create policy push_self on public.push_subscriptions
+  for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 drop policy if exists votes_read on public.desire_votes;
 create policy votes_read on public.desire_votes

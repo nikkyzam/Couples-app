@@ -171,6 +171,54 @@ last member, that space (and its notes) is cleaned up automatically.
 
 Row-level security ensures a couple can only ever read/write their own space's data.
 
+## Background push (notifications when the app is closed)
+
+By default, the new-note notification only fires while Kindle is open or recently
+backgrounded (it's generated on-device from the live sync). To have a note buzz your
+partner's phone **even when the app is fully closed**, turn on Web Push. It's optional —
+skip this and everything else still works.
+
+**One-time setup:**
+
+1. **Generate a VAPID keypair** (once):
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+   Note the **Public Key** and **Private Key**.
+
+2. **Ship the public key to the app.** Add it as `VITE_VAPID_PUBLIC_KEY` — in
+   `.env.local` for local dev, **and** as a GitHub **repository secret** (Settings →
+   Secrets and variables → Actions) so the deployed site includes it. Rebuild/redeploy.
+   (The public key is safe to expose; the private key never leaves the server.)
+
+3. **Apply the schema** (adds the `push_subscriptions` table) — re-run
+   [`supabase/schema.sql`](supabase/schema.sql) or `npm run db:push`.
+
+4. **Deploy the Edge Function** that sends the pushes:
+   ```bash
+   supabase functions deploy push-on-note --no-verify-jwt
+   ```
+   Then set its secrets (the `SUPABASE_*` ones are injected automatically):
+   ```bash
+   supabase secrets set \
+     VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... \
+     VAPID_SUBJECT=mailto:you@example.com \
+     WEBHOOK_SECRET=$(openssl rand -hex 16)
+   ```
+   Keep that `WEBHOOK_SECRET` value handy for the next step.
+
+5. **Fire it on new notes** with a Database Webhook: Supabase → **Database → Webhooks →
+   Create** → table `notes`, event **Insert**, type **HTTP Request**, URL =
+   your function's URL (`https://<project-ref>.functions.supabase.co/push-on-note`),
+   and add an HTTP header `x-webhook-secret` set to the `WEBHOOK_SECRET` from step 4.
+
+That's it. When someone sends a note, the function looks up the *other* partner's
+device subscriptions and delivers a push — the words stay hidden, it just says a note
+arrived. Dead subscriptions are pruned automatically. **On iPhone the recipient must
+have added Kindle to their Home Screen** (iOS only allows web push for installed PWAs),
+and turned Notifications on under **Settings → Notifications** (which is what registers
+their device).
+
 ## Getting it onto the App Store & Google Play
 
 The app installs to any phone **today** as a PWA (Add to Home Screen) — no store
