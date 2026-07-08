@@ -8,7 +8,15 @@ import {
   initialState,
   type Action,
 } from '../store'
-import type { AppState, PartnerId, SpiceLevel, Vote, LoveNote } from '../types'
+import type {
+  AppState,
+  PartnerId,
+  SpiceLevel,
+  Vote,
+  LoveNote,
+  DatePlan,
+  CyclePlan,
+} from '../types'
 import AuthScreen from './AuthScreen'
 import LinkScreen from './LinkScreen'
 import { showAppNotification } from '../lib/useNotifications'
@@ -24,6 +32,19 @@ interface CoupleRow {
   play_count: number
   owned_toys: string[] | null
   wishlist: string[] | null
+  cycle_last_start: string | null
+  cycle_length: number | null
+  cycle_period_length: number | null
+  cycle_owner: string | null
+}
+interface PlanRow {
+  id: string
+  created_by: string | null
+  plan_date: string
+  plan_time: string | null
+  title: string
+  note: string | null
+  done: boolean
 }
 interface MemberRow {
   couple_id: string
@@ -61,6 +82,7 @@ function buildState(
   members: MemberRow[],
   notes: NoteRow[],
   votes: VoteRow[],
+  plans: PlanRow[],
   myUid: string,
 ): AppState {
   const bySlot: Partial<Record<PartnerId, MemberRow>> = {}
@@ -93,6 +115,25 @@ function buildState(
     }
   })
 
+  const mappedPlans: DatePlan[] = plans.map((p) => ({
+    id: p.id,
+    date: p.plan_date,
+    time: p.plan_time ?? undefined,
+    title: p.title,
+    note: p.note ?? undefined,
+    done: p.done,
+    createdBy: p.created_by ? uidToSlot[p.created_by] : undefined,
+  }))
+
+  const cycle: CyclePlan | null = couple.cycle_last_start
+    ? {
+        lastStart: couple.cycle_last_start,
+        cycleLength: couple.cycle_length ?? 28,
+        periodLength: couple.cycle_period_length ?? 5,
+        owner: (couple.cycle_owner as PartnerId | null) ?? undefined,
+      }
+    : null
+
   return {
     profile: {
       accounts: {
@@ -112,6 +153,8 @@ function buildState(
     ownedToys: couple.owned_toys ?? [],
     wishlist: couple.wishlist ?? [],
     notes: mappedNotes,
+    plans: mappedPlans,
+    cycle,
   }
 }
 
@@ -189,12 +232,13 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       return
     }
     coupleId.current = cid
-    const [{ data: couple }, { data: members }, { data: notes }, { data: votes }] =
+    const [{ data: couple }, { data: members }, { data: notes }, { data: votes }, { data: plans }] =
       await Promise.all([
         sb.from('couples').select('*').eq('id', cid).single(),
         sb.from('members').select('*').eq('couple_id', cid),
         sb.from('notes').select('*').eq('couple_id', cid).order('created_at', { ascending: false }),
         sb.from('desire_votes').select('user_id,item_id,vote').eq('couple_id', cid),
+        sb.from('plans').select('*').eq('couple_id', cid).order('plan_date', { ascending: true }),
       ])
     if (!couple) {
       setPhase('link')
@@ -206,6 +250,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       (members ?? []) as MemberRow[],
       (notes ?? []) as NoteRow[],
       (votes ?? []) as VoteRow[],
+      (plans ?? []) as PlanRow[],
       uid,
     )
     localDispatch({ type: 'REPLACE', state: next })
@@ -224,6 +269,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     const channel = sb
       .channel(`couple-${cid}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `couple_id=eq.${cid}` }, loadBundle)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'plans', filter: `couple_id=eq.${cid}` }, loadBundle)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'desire_votes', filter: `couple_id=eq.${cid}` }, loadBundle)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'couples', filter: `id=eq.${cid}` }, loadBundle)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'members', filter: `couple_id=eq.${cid}` }, loadBundle)
@@ -277,6 +323,37 @@ export function CloudProvider({ children }: { children: ReactNode }) {
           break
         case 'DELETE_NOTE':
           await sb.from('notes').delete().eq('id', action.id)
+          break
+        case 'ADD_PLAN':
+          await sb.from('plans').insert({
+            id: action.plan.id,
+            couple_id: cid,
+            created_by: uid,
+            plan_date: action.plan.date,
+            plan_time: action.plan.time ?? null,
+            title: action.plan.title,
+            note: action.plan.note ?? null,
+            done: action.plan.done,
+          })
+          break
+        case 'DELETE_PLAN':
+          await sb.from('plans').delete().eq('id', action.id)
+          break
+        case 'TOGGLE_PLAN_DONE': {
+          const p = prev.plans.find((x) => x.id === action.id)
+          await sb.from('plans').update({ done: !p?.done }).eq('id', action.id)
+          break
+        }
+        case 'SET_CYCLE':
+          await sb
+            .from('couples')
+            .update({
+              cycle_last_start: action.cycle?.lastStart ?? null,
+              cycle_length: action.cycle?.cycleLength ?? null,
+              cycle_period_length: action.cycle?.periodLength ?? null,
+              cycle_owner: action.cycle?.owner ?? null,
+            })
+            .eq('id', cid)
           break
         case 'TOGGLE_FAVORITE':
           // Favorites are personal, so they stay device-local by design.

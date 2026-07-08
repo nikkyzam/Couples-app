@@ -99,6 +99,27 @@ export interface LoveNote {
   read: boolean
 }
 
+// A shared, planned intimate date on the couple's calendar ("the sex schedule").
+export interface DatePlan {
+  id: string
+  date: string // 'YYYY-MM-DD'
+  time?: string // 'HH:MM' (24h), optional
+  title: string // the idea / label
+  note?: string
+  done: boolean
+  createdBy?: PartnerId
+}
+
+// Optional period tracking for whichever partner menstruates. Everything shown is
+// derived from these three numbers (see lib/cycle.ts). Predictions are estimates
+// for awareness and planning — never a form of contraception.
+export interface CyclePlan {
+  lastStart: string // 'YYYY-MM-DD' — first day of the most recent period
+  cycleLength: number // average days between periods (typ. 21–35, default 28)
+  periodLength: number // days the period lasts (typ. 3–7, default 5)
+  owner?: PartnerId // whose cycle this is — a label only
+}
+
 export interface AppState {
   profile: Profile
   activeUser: PartnerId // who is currently holding the phone
@@ -112,4 +133,6 @@ export interface AppState {
   ownedToys: string[] // Toy ids the couple actually has ("our toy box")
   wishlist: string[] // Toy ids the couple wants to buy
   notes: LoveNote[]
+  plans: DatePlan[] // shared sex / date schedule
+  cycle: CyclePlan | null // optional period tracking (null until set up)
 }

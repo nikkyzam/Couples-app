@@ -64,6 +64,15 @@ one of two modes:
   web notifications only fire once it's installed.
 - **The Climax Guide** — a warm, communication-first playbook focused on her pleasure
   and finishing feeling amazing.
+- **Planner** — plan your time together and follow the rhythm of the month. A shared
+  **schedule** lets either partner put date nights and intimate plans on the calendar
+  (with an optional time, a note, and quick idea chips), tick them off, and keep a
+  history. An optional **cycle tracker** for whichever partner menstruates turns three
+  numbers (last period start, cycle length, period length) into a live read on the
+  current **phase**, **cycle day**, **next-period countdown**, and an estimated
+  **fertile window** — with a one-tap "period started today". In synced mode both the
+  schedule and cycle are **shared between phones**. Cycle predictions are estimates for
+  awareness and planning — **not** a form of contraception — and stay private to your space.
 - **Safe word bar** — on every game screen, either partner can tap to pause instantly.
 - **App lock** — optionally require a 4-digit PIN to open Kindle on this device
   (Settings → App lock). It re-locks after ~2 minutes in the background, and

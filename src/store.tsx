@@ -9,6 +9,8 @@ import {
 } from 'react'
 import type {
   AppState,
+  CyclePlan,
+  DatePlan,
   LoveNote,
   PartnerId,
   SpiceLevel,
@@ -36,6 +38,8 @@ export const initialState: AppState = {
   ownedToys: [],
   wishlist: [],
   notes: [],
+  plans: [],
+  cycle: null,
 }
 
 // Read persisted state synchronously so the very first render already knows
@@ -66,6 +70,10 @@ export type Action =
   | { type: 'SEND_NOTE'; note: LoveNote }
   | { type: 'MARK_NOTE_READ'; id: string }
   | { type: 'DELETE_NOTE'; id: string }
+  | { type: 'ADD_PLAN'; plan: DatePlan }
+  | { type: 'DELETE_PLAN'; id: string }
+  | { type: 'TOGGLE_PLAN_DONE'; id: string }
+  | { type: 'SET_CYCLE'; cycle: CyclePlan | null }
   | { type: 'REPLACE'; state: AppState }
   | { type: 'RESET' }
 
@@ -155,6 +163,19 @@ export function reducer(state: AppState, action: Action): AppState {
       }
     case 'DELETE_NOTE':
       return { ...state, notes: state.notes.filter((n) => n.id !== action.id) }
+    case 'ADD_PLAN':
+      return { ...state, plans: [...state.plans, action.plan] }
+    case 'DELETE_PLAN':
+      return { ...state, plans: state.plans.filter((p) => p.id !== action.id) }
+    case 'TOGGLE_PLAN_DONE':
+      return {
+        ...state,
+        plans: state.plans.map((p) =>
+          p.id === action.id ? { ...p, done: !p.done } : p,
+        ),
+      }
+    case 'SET_CYCLE':
+      return { ...state, cycle: action.cycle }
     case 'RESET':
       return initialState
     default:

@@ -16,12 +16,20 @@ create table if not exists public.couples (
   play_count     int  not null default 0,
   owned_toys     text[] not null default '{}',  -- shared toy box, synced between partners
   wishlist       text[] not null default '{}',  -- toys the couple wants to buy
+  cycle_last_start    date,  -- optional period tracking (null = off)
+  cycle_length        int,
+  cycle_period_length int,
+  cycle_owner         text,  -- 'A' | 'B' — whose cycle it is
   created_at     timestamptz not null default now()
 );
 
 -- For projects created before these columns existed:
 alter table public.couples add column if not exists owned_toys text[] not null default '{}';
 alter table public.couples add column if not exists wishlist   text[] not null default '{}';
+alter table public.couples add column if not exists cycle_last_start    date;
+alter table public.couples add column if not exists cycle_length        int;
+alter table public.couples add column if not exists cycle_period_length int;
+alter table public.couples add column if not exists cycle_owner         text;
 
 -- Each member is one authenticated user, tied to a slot ('A' or 'B').
 create table if not exists public.members (
@@ -41,6 +49,19 @@ create table if not exists public.notes (
   text       text not null,
   mood       text not null default '💌',
   read       boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- Shared sex / date schedule — planned moments both partners can see.
+create table if not exists public.plans (
+  id         uuid primary key default gen_random_uuid(),
+  couple_id  uuid not null references public.couples(id) on delete cascade,
+  created_by uuid references auth.users(id) on delete set null,
+  plan_date  date not null,
+  plan_time  text,
+  title      text not null,
+  note       text,
+  done       boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -70,6 +91,7 @@ $$;
 alter table public.couples      enable row level security;
 alter table public.members      enable row level security;
 alter table public.notes        enable row level security;
+alter table public.plans        enable row level security;
 alter table public.desire_votes enable row level security;
 
 drop policy if exists couples_rw on public.couples;
@@ -86,6 +108,10 @@ create policy members_self on public.members
 
 drop policy if exists notes_rw on public.notes;
 create policy notes_rw on public.notes
+  for all using (public.is_member(couple_id)) with check (public.is_member(couple_id));
+
+drop policy if exists plans_rw on public.plans;
+create policy plans_rw on public.plans
   for all using (public.is_member(couple_id)) with check (public.is_member(couple_id));
 
 drop policy if exists votes_read on public.desire_votes;
@@ -167,7 +193,7 @@ end; $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['notes', 'desire_votes', 'couples', 'members'] loop
+  foreach t in array array['notes', 'plans', 'desire_votes', 'couples', 'members'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
