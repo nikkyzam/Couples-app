@@ -146,6 +146,11 @@ it. From then on both share the same synced space. (By default Supabase requires
 confirmation on sign-up; you can turn that off in **Authentication → Providers → Email**
 for faster testing, or switch to magic-link auth.)
 
+**Joined the wrong space?** Under **Settings → Your invite code** there's a
+**"Leave and join another"** option: it removes you from your current space and drops
+you back on the create / join screen so you can enter a different code. If you were the
+last member, that space (and its notes) is cleaned up automatically.
+
 Row-level security ensures a couple can only ever read/write their own space's data.
 
 ## Getting it onto the App Store & Google Play

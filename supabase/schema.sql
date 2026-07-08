@@ -140,6 +140,26 @@ begin
   return cid;
 end; $$;
 
+-- Leave your current space so you can create or join a different one. If you were
+-- the last member, the space (and its notes/votes, via cascade) is removed too.
+create or replace function public.leave_couple()
+returns void language plpgsql security definer
+set search_path = public as $$
+declare cid uuid; remaining int;
+begin
+  select couple_id into cid from public.members where user_id = auth.uid() limit 1;
+  if cid is null then
+    return; -- not in a space; nothing to do
+  end if;
+
+  delete from public.members where couple_id = cid and user_id = auth.uid();
+
+  select count(*) into remaining from public.members where couple_id = cid;
+  if remaining = 0 then
+    delete from public.couples where id = cid; -- cascades notes + desire_votes
+  end if;
+end; $$;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Realtime: broadcast row changes so both phones update live.
 -- Idempotent so this whole file is safe to re-run (e.g. on every app startup).

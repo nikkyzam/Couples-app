@@ -166,10 +166,12 @@ export interface Ctx {
   state: AppState
   dispatch: React.Dispatch<Action>
   // Present in cloud mode: whether data is synced to Supabase, the shared
-  // invite code, and a sign-out action.
+  // invite code, a sign-out action, and a "leave this space" action that returns
+  // you to the create/join screen so you can join a different space with a code.
   cloud?: boolean
   signOut?: () => void
   inviteCode?: string
+  leaveSpace?: () => Promise<void>
 }
 
 export const StoreContext = createContext<Ctx | null>(null)

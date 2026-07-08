@@ -9,7 +9,7 @@ import { useAppLock } from '../lib/useAppLock'
 const EMOJIS = ['💜', '❤️', '🧡', '💛', '💚', '💙', '🩷', '🔥', '🌙', '⭐']
 
 export default function Settings() {
-  const { state, dispatch, cloud, inviteCode, signOut } = useStore()
+  const { state, dispatch, cloud, inviteCode, signOut, leaveSpace } = useStore()
   const navigate = useNavigate()
   const { profile } = state
   const { supported, voices, speak, prefs, setPrefs } = useSpeech()
@@ -18,6 +18,23 @@ export default function Settings() {
   const [pinStage, setPinStage] = useState<'idle' | 'set' | 'confirm'>('idle')
   const [firstPin, setFirstPin] = useState('')
   const [pinError, setPinError] = useState('')
+  // "Leave this space" flow — confirm before removing yourself from the space.
+  const [confirmLeave, setConfirmLeave] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  const [leaveError, setLeaveError] = useState('')
+
+  async function doLeave() {
+    setLeaving(true)
+    setLeaveError('')
+    try {
+      await leaveSpace?.()
+      // On success CloudProvider swaps to the create/join screen automatically.
+    } catch (e) {
+      setLeaveError(e instanceof Error ? e.message : 'Could not leave the space.')
+      setLeaving(false)
+      setConfirmLeave(false)
+    }
+  }
   // In synced mode you can only edit your own profile (your partner edits theirs
   // on their own phone).
   const editableSlots: PartnerId[] = cloud ? [state.activeUser] : ['A', 'B']
@@ -60,6 +77,52 @@ export default function Settings() {
             <p className="mt-2 text-xs text-plum-300/60">
               Share this with your partner so they can join your space from their phone.
             </p>
+
+            {leaveSpace && (
+              <div className="mt-4 border-t border-white/10 pt-4">
+                {!confirmLeave ? (
+                  <button
+                    onClick={() => {
+                      setConfirmLeave(true)
+                      setLeaveError('')
+                    }}
+                    className="text-sm text-plum-300/70 underline underline-offset-4"
+                  >
+                    Joined the wrong space? Leave and join another
+                  </button>
+                ) : (
+                  <div>
+                    <p className="text-sm text-white">Leave this space?</p>
+                    <p className="mt-1 text-xs text-plum-300/60">
+                      You’ll go back to the create / join screen so you can join with a
+                      code. If you’re the last one here, this space and its notes are
+                      deleted.
+                    </p>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        variant="danger"
+                        className="flex-1"
+                        disabled={leaving}
+                        onClick={doLeave}
+                      >
+                        {leaving ? 'Leaving…' : 'Leave space'}
+                      </Button>
+                      <Button
+                        variant="soft"
+                        className="flex-1"
+                        disabled={leaving}
+                        onClick={() => setConfirmLeave(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                    {leaveError && (
+                      <p className="mt-2 text-xs text-red-300">{leaveError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
         </>
       )}

@@ -293,9 +293,20 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(() => sb.auth.signOut(), [sb])
 
+  // Leave the current space and return to the create/join screen, so the user
+  // can join a different space with a code (or start a fresh one).
+  const leaveSpace = useCallback(async () => {
+    const { error } = await sb.rpc('leave_couple')
+    if (error) throw error
+    coupleId.current = null
+    setInviteCode(undefined)
+    localDispatch({ type: 'REPLACE', state: initialState })
+    setPhase('link')
+  }, [sb])
+
   const value = useMemo(
-    () => ({ state, dispatch, cloud: true, signOut, inviteCode }),
-    [state, dispatch, signOut, inviteCode],
+    () => ({ state, dispatch, cloud: true, signOut, inviteCode, leaveSpace }),
+    [state, dispatch, signOut, inviteCode, leaveSpace],
   )
 
   if (phase === 'loading') {
